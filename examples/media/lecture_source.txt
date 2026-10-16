@@ -1,0 +1,1 @@
+Today's lecture covers reinforcement learning. A policy maps a state to an action. The value function estimates expected future reward. Remember, the discount factor controls how much future rewards matter. The homework is due on Friday. How does exploration affect learning? The exam will cover value iteration and policy iteration.

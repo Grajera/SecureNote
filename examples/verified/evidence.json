@@ -1,0 +1,285 @@
+{
+  "python_socket_connections_blocked": true,
+  "packages": {
+    "faster-whisper": "1.2.1",
+    "ctranslate2": "4.6.0",
+    "numpy": "2.2.6",
+    "onnxruntime": "1.23.2",
+    "av": "16.0.1",
+    "huggingface-hub": "0.36.0",
+    "tokenizers": "0.22.1"
+  },
+  "model_files": [
+    {
+      "name": "config.json",
+      "bytes": 2227,
+      "sha256": "f3bc3821e9fc76a27bae538e11ae5b677dcdd352b4600429ce7951d398569aeb"
+    },
+    {
+      "name": "model.bin",
+      "bytes": 145216508,
+      "sha256": "2a166925539a16005f14ff328359f9b9adb9dc4fb631bb3b227526862e93e2ef"
+    },
+    {
+      "name": "tokenizer.json",
+      "bytes": 2128466,
+      "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df"
+    },
+    {
+      "name": "vocabulary.txt",
+      "bytes": 422309,
+      "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf"
+    }
+  ],
+  "runs": [
+    {
+      "label": "business",
+      "input": "examples/media/business.wav",
+      "query": "budget deadline",
+      "run_directory": "examples/verified/runs/20261023T005036-76e4817e",
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T005036-76e4817e",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": true,
+        "failure_injection": false,
+        "input_bytes": 826348,
+        "duration_seconds": 18.737052,
+        "container": "wav",
+        "decoded_audio": {
+          "duration_seconds": 18.7370625,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 6,
+        "transcript_characters": 266,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 6,
+          "notes_sha256": "ce72dc08e65edd09b2c8deabaca1eeee1b5ff05a09ca0733d66ed3c2c8844522",
+          "search_matches": 1
+        },
+        "latency_ms": 1616.5
+      }
+    },
+    {
+      "label": "lecture",
+      "input": "examples/media/lecture.mp3",
+      "query": "discount factor homework",
+      "run_directory": "examples/verified/runs/20261023T005037-3da8c5ab",
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T005037-3da8c5ab",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": true,
+        "failure_injection": false,
+        "input_bytes": 98238,
+        "duration_seconds": 24.502857,
+        "container": "mp3",
+        "decoded_audio": {
+          "duration_seconds": 24.4441875,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 4,
+        "transcript_characters": 327,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 6,
+          "notes_sha256": "ccd696ff3fde1f16d82535212402d8f651187b68d942a8d2d3edb1d801170880",
+          "search_matches": 2
+        },
+        "latency_ms": 1758.35
+      }
+    },
+    {
+      "label": "planning",
+      "input": "examples/media/planning.mp4",
+      "query": "battery encrypted",
+      "run_directory": "examples/verified/runs/20261023T005039-8368cab6",
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T005039-8368cab6",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": true,
+        "failure_injection": false,
+        "input_bytes": 225989,
+        "duration_seconds": 22.698005,
+        "container": "mov,mp4,m4a,3gp,3g2,mj2",
+        "decoded_audio": {
+          "duration_seconds": 22.709125,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 7,
+        "transcript_characters": 330,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 7,
+          "notes_sha256": "d25c21fc8a7282711bbdd3b4b30864884d71468e84b0b65bfb8bb58e017bfcfe",
+          "search_matches": 2
+        },
+        "latency_ms": 1403.71
+      }
+    },
+    {
+      "label": "malformed_model_output",
+      "run_directory": "examples/verified/runs/20261023T005040-494a0374",
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T005040-494a0374",
+        "status": "failed",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": false,
+        "failure_injection": true,
+        "input_bytes": 826348,
+        "duration_seconds": 18.737052,
+        "container": "wav",
+        "decoded_audio": {
+          "duration_seconds": 18.7370625,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "error_type": "ValueError",
+        "error": "Invalid transcript text or timestamp.",
+        "latency_ms": 1324.58
+      }
+    },
+    {
+      "label": "silence",
+      "run_directory": "examples/verified/runs/20261023T005042-3bdabd82",
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T005042-3bdabd82",
+        "status": "no_speech",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": false,
+        "failure_injection": false,
+        "input_bytes": 64044,
+        "duration_seconds": 2.0,
+        "container": "wav",
+        "decoded_audio": {
+          "duration_seconds": 2.0,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 0,
+        "transcript_characters": 0,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 0,
+          "notes_sha256": "2388e4935406057a0435ee44465823edf4475689799181d7b9093bdb7a9bb9b3",
+          "search_matches": 0
+        },
+        "latency_ms": 337.49
+      }
+    }
+  ]
+}
