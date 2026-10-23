@@ -1,0 +1,5 @@
+# Install CPU PyTorch first using the official CPU index (see README).
+torch==2.8.0
+transformers==4.57.1
+sentencepiece==0.2.1
+safetensors==0.6.2

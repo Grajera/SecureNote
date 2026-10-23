@@ -188,7 +188,7 @@ class ReviewStore:
                 if not any(json.loads(p.read_text(encoding="utf-8")).get("result_directory") == name for p in others):
                     if (root / "results" / name).exists():
                         shutil.rmtree(root / "results" / name)
-            for folder in (root / "inbox" / identifier, self.state / "review-device" / identifier):
+            for folder in (root / "inbox" / identifier, self.state / "review-device" / identifier, self.state / "answers" / identifier):
                 if folder.exists():
                     shutil.rmtree(folder)
             self.preview_path(identifier).unlink(missing_ok=True)

@@ -1,0 +1,26 @@
+{
+  "answer": "encrypted drive",
+  "sources": [
+    {
+      "id": 1,
+      "start": 2.38,
+      "end": 6.74,
+      "text": "We agreed to keep the original recording on an encrypted drive.",
+      "score": 0.707107,
+      "source": "20261023T061352-3a80c389"
+    }
+  ],
+  "retrieved": [
+    {
+      "id": 1,
+      "start": 2.38,
+      "end": 6.74,
+      "text": "We agreed to keep the original recording on an encrypted drive.",
+      "score": 0.707107,
+      "source": "20261023T061352-3a80c389"
+    }
+  ],
+  "question": "Where did we agree to keep the original recording?",
+  "status": "answered",
+  "run_id": "20261023T061355-0477c12e"
+}

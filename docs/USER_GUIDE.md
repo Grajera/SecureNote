@@ -199,27 +199,25 @@ python3 -m venv .venv
 
 Desktop mode also needs `python3-tk` and a graphical session. It is optional.
 
-## Dedicated device roadmap and assignment mapping
+## Current device roles and assignment mapping (v0.5)
 
-This version implements the laptop/server side. A future Pi Zero 2 W records
-through a USB microphone, stores audio locally, then transfers it for processing.
-There is **no Pi recording service, transfer service, live microphone capture,
-speaker diarization, speaker naming, LLM summarization or semantic search** in
-this prototype. The code does not invent device or security capabilities.
+The recorder role (device.py) queues and transfers recordings to laptop.py or the
+review workspace. Browser microphone capture is implemented. Pi hardware capture
+remains untested; the two-process demo emulates it with files. The desktop.py
+entry point now opens the local browser workspace, not a Tk application.
 
-`docs/Project_Assignment_2.pdf` is the four-page submission. `docs/architecture.md`
-contains the implemented architecture and contracts. The local controller
-invokes allowlisted `inspect_media`, `decode_audio` and `search_transcript`
-tools, with input/result validation and logged calls. This is the implemented
-**tool-call** requirement. Search is retrieval but is not advertised as full
-RAG; no LLM is selecting tools and there is no autonomous agent loop.
+The assignment's additional requirement is implemented through **local RAG** in
+prototype/rag.py: validated question -> retrieved transcript chunks -> context
+prompt -> FLAN-T5 generation -> checked answer and timestamped evidence. FFmpeg
+and retrieval utility calls alone are not presented as model-directed tool calls.
 
-Code is small enough to explain: `securenote.py` dispatches CLI commands;
-`prototype/pipeline.py` handles stages, tools and logging;
-`prototype/analysis.py` implements notes and retrieval; `desktop.py` wraps these
-functions in a local window. Consult `docs/SECURITY_AND_GAPS.md` for next steps.
+See README for CPU PyTorch, requirements-rag.txt and ask.py download-model setup.
+Ask through the browser or `python ask.py ask RESULT_DIRECTORY "Question"`.
+Run `python tools/run_assignment_demo.py --output demo-assignment-new` to reproduce
+three complete examples and the missing-retrieval failure. Current evidence is
+in examples/assignment-v05 and the report is docs/Project_Assignment_2.pdf.
 
-References: [faster-whisper](https://github.com/SYSTRAN/faster-whisper),
-[model card](https://huggingface.co/Systran/faster-whisper-base.en),
-[Whisper models](https://github.com/openai/whisper),
-[FFmpeg protocol allowlists](https://ffmpeg.org/ffmpeg-protocols.html).
+The earlier standalone CLI instructions above remain useful for diagnostics.
+For the current browser workflow, follow README. No speaker identification,
+semantic meeting summary, production hardening or tested physical Pi deployment
+is claimed. All inference is local after package/model setup.

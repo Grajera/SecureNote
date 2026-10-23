@@ -272,6 +272,8 @@ async function selectRecording(identifier) {
   const detail = await api('/api/jobs/' + identifier);
   if (request !== selecting) return;
   current = detail;
+  byId('answerResult').replaceChildren(); byId('answerResult').hidden = true;
+  byId('askQuestion').value = '';
   byId('quickNote').value = sessionStorage.getItem('draft-' + identifier) || '';
   byId('noteFilter').value = ''; 
   pendingSeek = {seconds: Number(localStorage.getItem('securenote-position-' + identifier)) || 0, play: false};
@@ -463,5 +465,41 @@ byId('globalSearchForm').onsubmit = event => {
       }); box.append(button);
     }
     if (!results.length) box.append(element('p', '', 'No matching notes or transcript passages. Try a word from the recording. Trash is excluded.'));
+  });
+};
+
+byId('askForm').onsubmit = event => {
+  event.preventDefault(); run(async () => {
+    if (!current) return;
+    const identifier = current.id;
+    const question = byId('askQuestion').value.trim();
+    if (!question) return;
+    byId('askButton').disabled = true;
+    const box = byId('answerResult'); box.hidden = false;
+    box.replaceChildren(element('p', '', 'Finding evidence and generating an answer locally…'));
+    try {
+      const result = await api('/api/jobs/' + identifier + '/ask', 'POST', {question});
+      if (current?.id !== identifier) return;
+      box.replaceChildren(element('p', 'rag-answer', result.answer));
+      box.append(element('small', '', 'Status: ' + result.status.replaceAll('_', ' ') + ' · ' + (result.latency_ms / 1000).toFixed(2) + ' seconds'));
+      if (result.retrieved.length) box.append(element('h3', '', 'Retrieved transcript evidence'));
+      for (const source of result.retrieved) {
+        const evidence = element('article', 'rag-evidence');
+        evidence.append(stamp(source.start));
+        evidence.append(element('p', '', source.text)); box.append(evidence);
+      }
+      if (result.status === 'answered') {
+        const keep = element('button', 'quiet', 'Save answer to my notes');
+        keep.onclick = () => run(async () => {
+          if (current?.id !== identifier) return;
+          await saveReview({bookmarks: [...current.annotation.bookmarks, {
+            id: crypto.randomUUID().replaceAll('-', ''), start: Math.min(result.sources[0].start, current.duration),
+            text: ('Q: ' + question + '\nAnswer: ' + result.answer).slice(0, 1000)}]});
+          keep.disabled = true; keep.textContent = 'Saved to your notes'; renderBookmarks();
+        }); box.append(keep);
+      }
+    } catch (error) {
+      if (current?.id === identifier) box.replaceChildren(element('p', '', error.message));
+    } finally { byId('askButton').disabled = false; }
   });
 };

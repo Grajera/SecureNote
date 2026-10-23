@@ -200,6 +200,29 @@ class ReviewTests(unittest.TestCase):
         gpu = Processor(Path(self.temporary.name) / "gpu", "unused", device="cuda")
         self.assertEqual((gpu.device, gpu.compute_type), ("cuda", "float16"))
 
+    def test_rag_endpoint_requires_session_csrf_and_completed_recording(self):
+        path = "/api/jobs/" + self.identifier + "/ask"
+        self.assertEqual(self.request("POST", path, {"question": "budget"})[0], 401)
+        csrf = self.login()
+        self.assertEqual(self.request("POST", path, {"question": "budget"})[0], 403)
+        headers = {"Origin": self.server.origin, "X-Review-CSRF": csrf}
+        from prototype.rag import NOT_FOUND
+        with patch("prototype.rag.load_answer_model") as model:
+            response = self.request("POST", path, {"question": "quartz volcano"}, headers)
+        model.assert_not_called()
+        self.assertEqual(response[0], 200)
+        self.assertEqual(json.loads(response[2])["answer"], NOT_FOUND)
+        self.server.store.trash(self.identifier)
+        self.assertEqual(self.request("POST", path, {"question": "budget"}, headers)[0], 400)
+
+    def test_purge_removes_saved_rag_artifacts(self):
+        folder = self.state / "answers" / self.identifier / "example"
+        folder.mkdir(parents=True)
+        (folder / "answer.json").write_text('{"answer":"private note"}')
+        self.server.store.trash(self.identifier)
+        self.server.store.purge(self.identifier)
+        self.assertFalse(folder.exists())
+
     def test_range_parser_edge_cases(self):
         self.assertEqual(parse_range("bytes=4-", 10), (4, 9, True))
         self.assertEqual(parse_range("bytes=-100", 10), (0, 9, True))

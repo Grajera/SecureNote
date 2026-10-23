@@ -1,0 +1,26 @@
+{
+  "answer": "discount factor",
+  "sources": [
+    {
+      "id": 3,
+      "start": 6.52,
+      "end": 19.48,
+      "text": "Remember, the discount factor controls how much future rewards matter.",
+      "score": 0.80031,
+      "source": "20261023T061350-2b2d1c27"
+    }
+  ],
+  "retrieved": [
+    {
+      "id": 3,
+      "start": 6.52,
+      "end": 19.48,
+      "text": "Remember, the discount factor controls how much future rewards matter.",
+      "score": 0.80031,
+      "source": "20261023T061350-2b2d1c27"
+    }
+  ],
+  "question": "What controls how much future rewards matter?",
+  "status": "answered",
+  "run_id": "20261023T061355-dc3daa4f"
+}

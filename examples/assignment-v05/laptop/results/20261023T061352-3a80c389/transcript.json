@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.38,
+      "text": "This is the recorder planning meeting."
+    },
+    {
+      "start": 2.38,
+      "end": 6.74,
+      "text": "We agreed to keep the original recording on an encrypted drive."
+    },
+    {
+      "start": 6.74,
+      "end": 11.02,
+      "text": "The device must record audio before sending it to the laptop."
+    },
+    {
+      "start": 11.02,
+      "end": 14.34,
+      "text": "Bob will review the microphone settings tomorrow."
+    },
+    {
+      "start": 14.34,
+      "end": 17.46,
+      "text": "The important constraint is battery life."
+    },
+    {
+      "start": 17.46,
+      "end": 20.02,
+      "text": "Who will test the transfer cable?"
+    },
+    {
+      "start": 20.02,
+      "end": 22.82,
+      "text": "We have not decided on a wireless connection."
+    }
+  ],
+  "passages": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 2.38,
+      "text": "This is the recorder planning meeting."
+    },
+    {
+      "id": 1,
+      "start": 2.38,
+      "end": 6.74,
+      "text": "We agreed to keep the original recording on an encrypted drive."
+    },
+    {
+      "id": 2,
+      "start": 6.74,
+      "end": 11.02,
+      "text": "The device must record audio before sending it to the laptop."
+    },
+    {
+      "id": 3,
+      "start": 11.02,
+      "end": 14.34,
+      "text": "Bob will review the microphone settings tomorrow."
+    },
+    {
+      "id": 4,
+      "start": 14.34,
+      "end": 17.46,
+      "text": "The important constraint is battery life."
+    },
+    {
+      "id": 5,
+      "start": 17.46,
+      "end": 20.02,
+      "text": "Who will test the transfer cable?"
+    },
+    {
+      "id": 6,
+      "start": 20.02,
+      "end": 22.82,
+      "text": "We have not decided on a wireless connection."
+    }
+  ]
+}

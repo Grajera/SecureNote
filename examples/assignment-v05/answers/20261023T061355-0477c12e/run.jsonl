@@ -1,0 +1,20 @@
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806257+00:00", "stage": "input", "event": "received", "input_characters": 50}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806430+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806487+00:00", "stage": "validation", "event": "completed", "latency_ms": 0.06}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806540+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806699+00:00", "stage": "retrieval", "event": "result", "chunk_count": 1, "threshold": 0.2, "scores": [0.707107]}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806731+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.19}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806755+00:00", "stage": "model_loading", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806810+00:00", "stage": "model_loading", "event": "completed", "latency_ms": 0.05}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.806833+00:00", "stage": "prompt_building", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.807399+00:00", "stage": "prompt_building", "event": "result", "prompt_tokens": 52, "chunk_ids": [1]}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.807450+00:00", "stage": "prompt_building", "event": "completed", "latency_ms": 0.62}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.807477+00:00", "stage": "model_inference", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887356+00:00", "stage": "model_inference", "event": "result", "output_characters": 15}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887595+00:00", "stage": "model_inference", "event": "completed", "latency_ms": 80.11}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887651+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887700+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 0.05}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887729+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887926+00:00", "stage": "output", "event": "result", "files": ["answer.json", "answer.md"], "status": "answered", "source_count": 1, "answer_characters": 15, "answer_sha256": "44909b003d967cb7dec51dbeec9ad39e6ce0cb010d1aab65705b3f42ecd8f4af", "answer": "encrypted drive"}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.887962+00:00", "stage": "output", "event": "completed", "latency_ms": 0.23}
+{"run_id": "20261023T061355-0477c12e", "timestamp": "2026-10-23T06:13:55.888044+00:00", "stage": "run", "event": "finished", "status": "answered", "latency_ms": 81.74}

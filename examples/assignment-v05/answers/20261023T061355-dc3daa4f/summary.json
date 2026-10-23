@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "run_id": "20261023T061355-dc3daa4f",
+  "source": "20261023T061350-2b2d1c27",
+  "status": "answered",
+  "model": {
+    "name": "google/flan-t5-small",
+    "device": "cpu",
+    "compute_type": "float32"
+  },
+  "runtime": {
+    "os": "Linux",
+    "python": "3.12.14",
+    "cpu_threads": 4
+  },
+  "content_logging": true,
+  "failure_injection": false,
+  "input_characters": 45,
+  "transcript_characters": 327,
+  "retrieved_count": 1,
+  "prompt_tokens": 50,
+  "supplied_count": 1,
+  "latency_ms": 79.05
+}

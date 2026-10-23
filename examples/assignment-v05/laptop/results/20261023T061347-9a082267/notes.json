@@ -1,0 +1,43 @@
+{
+  "Decisions": [
+    {
+      "id": 1,
+      "start": 2.74,
+      "end": 7.04,
+      "text": "We decided to use the local server for all meeting recordings.",
+      "importance_score": 1.1592
+    }
+  ],
+  "Action items": [
+    {
+      "id": 2,
+      "start": 7.04,
+      "end": 10.38,
+      "text": "Alice will send the revised budget by Friday.",
+      "importance_score": 1.0
+    }
+  ],
+  "Key points": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 2.74,
+      "text": "Today we reviewed the project schedule.",
+      "importance_score": 1.0
+    },
+    {
+      "id": 3,
+      "start": 10.38,
+      "end": 14.2,
+      "text": "The main risk is limited storage on the recording device.",
+      "importance_score": 4.0
+    },
+    {
+      "id": 5,
+      "start": 16.88,
+      "end": 18.88,
+      "text": "The next meeting is on Monday.",
+      "importance_score": 1.1592
+    }
+  ]
+}

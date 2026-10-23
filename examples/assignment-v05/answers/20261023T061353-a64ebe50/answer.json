@@ -1,0 +1,26 @@
+{
+  "answer": "by Friday",
+  "sources": [
+    {
+      "id": 2,
+      "start": 7.04,
+      "end": 10.38,
+      "text": "Alice will send the revised budget by Friday.",
+      "score": 0.894427,
+      "source": "20261023T061347-9a082267"
+    }
+  ],
+  "retrieved": [
+    {
+      "id": 2,
+      "start": 7.04,
+      "end": 10.38,
+      "text": "Alice will send the revised budget by Friday.",
+      "score": 0.894427,
+      "source": "20261023T061347-9a082267"
+    }
+  ],
+  "question": "When will Alice send the revised budget?",
+  "status": "answered",
+  "run_id": "20261023T061353-a64ebe50"
+}

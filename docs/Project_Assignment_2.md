@@ -1,154 +1,160 @@
-# SecureNote - Project Assignment 2
+# SecureNote: A Local Meeting Recorder
 
-**First working prototype: emulated recorder to laptop processor.** Two independent roles run on one laptop now: a lightweight recorder queues and transfers media; the receiver runs local AI and produces searchable notes. Later, the recorder moves to a Pi Zero 2 W and the receiver moves to a server. Their transfer contract remains the same.
+Michael Grajera  |  ECE 6540: AI Architecture  |  Project Assignment 2  |  October 23, 2026
 
-## 1. Implemented prototype architecture
+I want SecureNote to make a class or meeting easier to review without taking notes throughout the discussion. The prototype accepts a recording, transcribes it locally, selects useful passages, and answers questions using the transcript. The recorder is emulated on the same computer as the processor. Later, it can move to a Pi Zero 2 W while a laptop or server runs the models.
 
-# Implemented recorder/processor architecture, version 0.2
+## 1. Implemented architecture
+
+Figure 1. The stored transcript supplies evidence to the RAG pipeline before answer generation.
 
 ```mermaid
 flowchart TD
-    I["Device input: recording replay"] --> Q["Device spool: media and manifest"]
-    Q --> T["Transfer: token-authenticated upload"]
-    T --> V["Receiver: checksum validation, ACK, queue"]
-    V --> A["Media validation: inspect_media tool"]
-    A --> P["Preprocessing: decode_audio tool"]
-    P --> M["Local model inference: Whisper base.en"]
-    M --> N["Postprocessing: contracts and automatic notes"]
-    N --> R["Retrieval tool: search_transcript"]
-    R --> O["Output: searchable transcript and notes"]
-    Q -.-> L["Device, receiver and pipeline logs"]
-    V -.-> L
-    M -.-> L
-    O -.-> L
-    D["Planned: tested Pi microphone hardware"] -.-> I
-    F["Planned: diarization and local LLM"] -.-> N
-    style D stroke-dasharray: 5 5
-    style F stroke-dasharray: 5 5
+ I[Recording input] --> V[Validation and decoding]
+ V --> W[Local Whisper inference]
+ W --> T[Validated transcript and notes]
+ Q[Question input and validation] --> R[Retrieve transcript chunks]
+ T --> R
+ R --> P[Build question and context prompt]
+ P --> M[Local FLAN-T5 inference]
+ M --> C[Postprocess answer and evidence]
+ C --> O[Answer and timestamped sources]
+ T -.-> L[Stage logs and output artifacts]
+ O -.-> L
+ F[Planned: Pi capture and diarization]
+ style F stroke-dasharray: 5 5
 ```
 
-Device and processor are independent programs with separate directories. The
-same-PC demo uses loopback HTTP; cross-machine deployment requires HTTPS.
-The recorder has no ASR/LLM dependency. Detailed recorder/receiver contract,
-acknowledgment semantics, retry behavior and migration instructions are in
-TWO_ROLE_DEPLOYMENT.md. Capture is file replay; transport and processing run.
+The recorder queues a local copy and sends it to a separate receiver process. The receiver checks the token, byte count and SHA-256 before acknowledging storage. Media must be nonempty, at most 2 GiB, and contain decodable audio of no more than two hours. FFprobe inspects the file and FFmpeg converts it to mono PCM. Whisper produces timestamped text; postprocessing checks the segment format and groups selected sentences into notes.
 
-## Device-to-receiver boundary
+The required additional component is RAG. A question retrieves up to three transcript chunks. Those chunks become context in the prompt sent to FLAN-T5-small, which generates a short answer locally. The application attaches matching source timestamps and lets the user listen or save the answer. If retrieval returns nothing, it reports "Not found in this recording" and skips generation. Ordinary FFmpeg calls are not being counted as AI tool calls.
 
-Input is a raw media body and schema-1.0 manifest with recording/device IDs,
-ISO-8601 capture time, byte count and SHA-256. Required token, one Content-Length,
-2-GiB size cap, strict manifest shape and body hash are checked. A successful
-receipt contains ID/size/hash; only then does the device mark delivery. The
-receiver publishes a persistent job before acknowledgment. Bad requests return
-400/401 with no published job; missing acknowledgment leaves a retryable device
-copy. The same ID+manifest is idempotent. A later media/ASR failure is reported
-as a failed job, separately from delivery acknowledgment.
+The browser also provides the full transcript, editable notes, search, export and deletion. Each pipeline logs input size, stages, latency and output metadata. Content stays out of default logs; transcript and answer files are stored separately. The synthetic demonstration enables answer text in its logs so the results can be inspected.
 
+# 2. Three complete example runs
 
+The demo transferred and transcribed three synthetic recordings, then answered one question about each transcript. It ran on a Linux AMD EPYC 9V74 test host with Python 3.12.14 and four CPU threads per model. These are not laptop or Pi timings. Python socket connections were blocked during the RAG runs; local generation still completed.
 
-**Device side:** device.py imports a recording to emulate capture, writes a persistent spool and manifest, uploads bytes and records acknowledgment. Failed transfers remain queued for retry. **Laptop side:** laptop.py authenticates the request, verifies its size/hash, publishes a stored job, acknowledges delivery and processes one recording at a time. Acknowledgment means stored, not that transcription succeeded.
+## A. Business meeting
 
-Processing validates media, invokes allowlisted inspect_media/decode_audio tools, runs local Whisper, validates ASR segments, selects important transcript sentences, omits empty note sections and calls the search_transcript retrieval tool. This satisfies the tool-call option. Search is lexical retrieval, not full RAG or an LLM agent loop.
+Input: business.wav, 826,348 bytes, 18.74 seconds of decoded audio.
+Question: When will Alice send the revised budget?
 
-**Separation and security:** the device uses only Python standard-library code; all model dependencies remain on the laptop. Loopback HTTP emulates transfer on one computer. Separate-machine operation requires HTTPS with certificate verification. A bearer token protects uploads/status. Media, queue data and results are plaintext and require protected storage. No hosted model API is used.
+Generated answer: "by Friday"
+Retrieved evidence [7.04 s]: Alice will send the revised budget by Friday.
 
-## 2. Three real recorder-to-processor runs
-
-The demo launches the laptop receiver and invokes the recorder as separate OS processes. Synthetic recordings are imported, actually uploaded over loopback HTTP, acknowledged and transcribed locally. Execution used Linux x86-64, AMD EPYC 9V74, Python 3.12.14 and four CPU inference threads. These are short smoke tests, not performance estimates for the Windows laptop. The earlier standalone inference tests also blocked Python socket connections.
-
-## A. Business meeting / WAV
-
-**Input:** business.wav; 826,348 bytes; 18.74 s. Source excerpt: &quot;Alice will send the revised budget by Friday.&quot;
-**Output:** Decision: We decided to use the local server for all meeting recordings. Action: Alice will send the revised budget by Friday.
-**Result:** device delivered; processor completed; 6 notes. Pipeline 1.648 s; capture/transfer/processing 1.787 s.
+Transcription produced 6 segments and 5 notes. Recording pipeline: 2.808 s. RAG request: 2.502 s; 1 retrieved chunk, 47 prompt tokens.
 
 ```text
-{"stage":"transfer_validation","event":"accepted",
- "input_bytes":826348,"latency_ms":6.11}
-{"stage":"processor","event":"finished",
- "status":"completed","latency_ms":1647.99}
+{"stage":"input","event":"received","input_characters":40}
+{"stage":"model_inference","event":"completed","latency_ms":91.58}
+{"stage":"output","event":"result","answer":"by Friday"}
 ```
 
-## B. Class lecture / MP3
+## B. Class lecture
 
-**Input:** lecture.mp3; 98,238 bytes; 24.50 s. Source excerpt: &quot;Remember, the discount factor controls how much future rewards matter.&quot;
-**Output:** Key point: Remember, the discount factor controls how much future rewards matter. Key point: The homework is due on Friday.
-**Result:** device delivered; processor completed; 6 notes. Pipeline 1.797 s; capture/transfer/processing 1.982 s.
+Input: lecture.mp3, 98,238 bytes, 24.44 seconds of decoded audio.
+Question: What controls how much future rewards matter?
+
+Generated answer: "discount factor"
+Retrieved evidence [6.52 s]: Remember, the discount factor controls how much future rewards matter.
+
+Transcription produced 4 segments and 5 notes. Recording pipeline: 1.541 s. RAG request: 0.079 s; 1 retrieved chunk, 50 prompt tokens.
 
 ```text
-{"stage":"transfer_validation","event":"accepted",
- "input_bytes":98238,"latency_ms":2.46}
-{"stage":"processor","event":"finished",
- "status":"completed","latency_ms":1797.16}
+{"stage":"input","event":"received","input_characters":45}
+{"stage":"model_inference","event":"completed","latency_ms":77.35}
+{"stage":"output","event":"result","answer":"discount factor"}
 ```
 
-## C. Recorder planning / MP4
+## C. Recorder planning
 
-**Input:** planning.mp4; 225,989 bytes; 22.70 s. Source excerpt: &quot;We agreed to keep the original recordings on an encrypted drive.&quot;
-**Output:** Decision: We agreed to keep the original recording on an encrypted drive. Key point: The important constraint is battery life.
-**Result:** device delivered; processor completed; 7 notes. Pipeline 1.455 s; capture/transfer/processing 1.604 s.
+Input: planning.mp4, 225,989 bytes, 22.71 seconds of decoded audio.
+Question: Where did we agree to keep the original recording?
+
+Generated answer: "encrypted drive"
+Retrieved evidence [2.38 s]: We agreed to keep the original recording on an encrypted drive.
+
+Transcription produced 7 segments and 6 notes. Recording pipeline: 1.084 s. RAG request: 0.082 s; 1 retrieved chunk, 52 prompt tokens.
 
 ```text
-{"stage":"transfer_validation","event":"accepted",
- "input_bytes":225989,"latency_ms":3.79}
-{"stage":"processor","event":"finished",
- "status":"completed","latency_ms":1454.7}
+{"stage":"input","event":"received","input_characters":50}
+{"stage":"model_inference","event":"completed","latency_ms":80.11}
+{"stage":"output","event":"result","answer":"encrypted drive"}
 ```
 
-Excerpts project fields from genuine JSONL records. Full manifests, delivery receipts, receiver logs, ASR transcripts, notes and job states are under examples/distributed-verified/. Automatic notes also include timestamped search results. Query an existing transcript using securenote.py search RESULT-DIRECTORY "budget". The lecture misheard parts of its definition and final question; the artifacts preserve these errors rather than concealing them.
+These log excerpts retain selected fields from real records. The first RAG request includes 2.407 seconds of model loading; later requests reuse the loaded model. Full inputs, transcripts, notes, answers and stage logs are in examples/assignment-v05/. The short clips demonstrate the pipeline, not expected speed or accuracy for a full meeting.
 
-**Reproduce:** python tools/run_distributed_demo.py --output demo-two-role. This also performs the intentional corrupt-transfer failure test. No Pi, microphone or external server is needed for the demo.
+One limitation remains visible in the lecture transcript: Whisper wrote "A policy map sustained to an action." Retrieval and generation cannot repair incorrect source material reliably, so the recording remains available for review.
+
+```text
+python tools/run_assignment_demo.py --output demo-assignment-new
+```
+
+Run after model setup, using a fresh output folder. This reproduces all three examples and the missing-retrieval test below.
+
+# Stage interfaces and model choice
 
 ## 3. Two stage interfaces
 
-## Boundary A - Recorder transfer to receiver queue
+Boundary A: retriever to prompt builder. The retriever takes a question string of 1-512 characters and validated transcript passages. It splits long passages at word boundaries and returns a list of up to three chunks scoring at least 0.20 under TF-IDF cosine similarity. Each chunk has {id: int, text: str, source: str, start: float, end: float, score: float}. Text is limited to 600 characters; source identifies the recording; times are seconds.
 
-**Input:** POST /v1/recordings with raw media bytes, one Content-Length, bearer token and a base64 JSON manifest: {schema_version: "1.0", recording_id: 32-char hex, device_id: 1-64 safe characters, captured_at: ISO-8601, input_bytes: int, sha256: 64-char hex}. Maximum size is 2 GiB; manifest header is at most 2048 bytes. Device filenames never choose receiver paths.
+The prompt builder produces a string containing instructions, the question and the selected chunk text, plus the list of supplied chunks and its token count. The prompt is at most 512 model tokens. Only complete chunks that fit are included. The question and instructions alone must fit within 160 tokens, reserving room for context.
 
-**Output:** a stored recording, manifest and queued job, plus HTTP 201 receipt {recording_id, input_bytes, sha256, status: "accepted"}; an identical repeat returns HTTP 200 without a second job. The recorder compares the receipt before marking delivered. A separate authenticated status query reports queued, processing, completed or failed.
+Invalid or missing data: reject malformed fields, duplicate IDs, empty text, nonfinite scores/times, out-of-range values and an oversized question. Empty retrieval returns an explicit not_found result and never calls the generator. If chunks exist but none fits the prompt, the run fails with a clear error rather than silently truncating the context.
 
-**Missing/invalid:** missing authentication returns 401. Invalid manifest, size disagreement, corrupt bytes or conflicting ID return 400 without publishing a job. Interrupted uploads are not processed. Failed/missing acknowledgment leaves the recorder item queued for retry. Accepted media still undergoes audio-track/duration/format validation before inference. Delivery does not imply valid speech.
+Boundary B: answer generator to postprocessing. Input is the decoded model response as a string, along with the exact chunks supplied in the prompt. Decoding is limited to 64 new tokens. Output is {answer: str, status: str, sources: list}, with source records carrying their original text, recording ID, timestamps and retrieval score.
 
-## Boundary B - Model inference to postprocessing
+Invalid or missing data: empty, non-string, oversized or token-limit responses fail validation. Postprocessing normalizes spacing and checks whether the answer wording occurs in a supplied chunk. A match produces answered status and source links; an unmatched response becomes needs_review. An explicit model abstention becomes not_found. This conservative check can reject a valid paraphrase and cannot establish factual correctness; source links are assigned by code, not invented by the model.
 
-**Input:** mono waveform float32 array (N,), 16,000 Hz, approximately [-1,1), duration 0-7200 s excluding zero. The ASR adapter emits list[{start: float, end: float, text: str}]. **Output:** sentence passages [{id, start, end, text}] and nonempty note sections containing selected source passages plus importance scores. Sentence fragments are joined across ASR segments; intervals are approximate.
+## 4. Models, precision and assumptions
 
-**Missing/invalid:** reject non-list/oversized output, empty or wrong-type text, nonfinite times, inverted intervals or unordered starts. Limits: 100,000 segments, 20,000 characters/segment, 0 &lt;= start &lt;= end &lt;= duration + 1 s. Invalid results fail the job before notes. An empty list yields no_speech with an explicit message and zero notes. Structural checks cannot establish transcription accuracy.
+Whisper base.en handles transcription through faster-whisper 1.2.1/CTranslate2 4.6.0. I chose it to get a small local prototype running; its model directory is about 141 MiB. It uses CPU int8 here. The three recording pipelines took 1.084-2.808 seconds, and transcription errors occurred. Without a float32 comparison, I cannot attribute those errors to quantization.
 
-## 4. Model choice and assumptions
+FLAN-T5-small handles answers through Transformers 4.57.1 and PyTorch 2.8.0. Its loaded model has 76,961,152 parameters; the checkpoint is about 294 MiB. It runs on CPU in float32, without quantization, and generated these short answers in 77-92 ms after loading. It was chosen for a small memory footprint and simple local setup, not advanced reasoning. Both models require one-time downloads and local compute, with no paid inference API. Whisper CUDA support exists but was not verified on the target laptop.
 
-**Whisper base.en**, 74M parameters [1], runs with faster-whisper 1.2.1/CTranslate2 4.6.0 on the processor. The checkpoint stores FP16 weights [2]; inference uses CPU int8. Local weights occupy about 141 MiB; there is no paid inference service. Three short two-role runs completed successfully with pipeline times of 1.648, 1.797, 1.455 s. ASR mistakes occurred. No float32 accuracy comparison was done, so their cause cannot be attributed to quantization.
+Assumption 1: inputs contain understandable English with limited overlapping speech. Noise and unfamiliar terminology can damage the transcript before retrieval begins.
 
-The intended laptop has an i5-13420H, 32 GB RAM and RTX 4050 6 GB; its actual performance was not measured. CPU mode avoids GPU driver requirements. **Assumption 1:** intelligible English speech, limited overlap; no reliable speaker identity is assumed. **Assumption 2:** transcripts/timestamps are fallible evidence; a user verifies consequential notes. Neither note selection nor the model invents an action owner or deadline intentionally.
+Assumption 2: a short answer can often be found in a few transcript passages. The generator may still choose the wrong passage or misinterpret it, so consequential answers require human review.
 
-## 5. Intentional transfer failure
+Model documentation: huggingface.co/google/flan-t5-small; github.com/SYSTRAN/faster-whisper. The report uses measured prototype results rather than claiming benchmark accuracy.
 
-**What changed:** after the emulated device prepared a legitimate recording and SHA-256 manifest, the demo flipped one byte of the uploaded body while retaining the original checksum. Authentication and byte count were correct. This intentionally breaks the recorder-to-receiver data contract.
+# Failure test and remaining work
 
-**Result:** the receiver returned HTTP 400, logged a validation failure, cleaned up partial storage and published no processing job. It did not crash or silently generate wrong notes. The device copy remained queued and intact. **Which boundary let it through?** the simulated sender supplied corrupt bytes; the receiver intake boundary caught them before ASR. No downstream stage accepted the damaged payload.
+## 5. Failure test: missing retrieval evidence
+
+For the business-meeting question, the normal retriever finds "Alice will send the revised budget by Friday." The failure test deliberately replaces that result with an empty list before prompt building. The recording and question are unchanged, so the answer exists in the transcript but is unavailable to the generator.
+
+The system did not crash or quietly answer from model memory. It returned "Not found in this recording," with no sources, in 0.62 ms. The prompt-building and model-inference stages were explicitly skipped. The test therefore checks the retriever-to-prompt boundary: it accepts an empty list as a valid no-evidence result and prevents an unsupported generation call.
 
 ```text
-{"stage":"transfer_validation","event":"rejected",
- "error_type":"ValueError","latency_ms":4.64}
-{"http_status":400,"published_job":false,
- "device_status":"queued"}
+{"stage":"retrieval","event":"result","chunk_count":0}
+{"stage":"model_inference","event":"skipped","reason":"no_evidence"}
+{"stage":"run","event":"finished","status":"not_found",
+ "latency_ms":0.62}
 ```
 
-**What to add:** the checksum catches accidental corruption, while the token and TLS protect the channel. Add per-device credentials, key rotation, storage quotas, explicit retry scheduling/backoff and labeled speech-quality checks. A checksum alone cannot establish sender identity or factual accuracy. Fourteen tests passed, including corrupted transfer, wrong token, queue persistence across receiver restart, unavailable receiver, idempotent retransmission and model/retrieval contracts.
+Nothing passed through to generation in this test. The remaining weakness is that "not found" can mean retrieval missed an answer that is present. I would add labeled retrieval tests, track empty-result rates and assess a semantic retriever before changing the threshold. The message should remain cautious: it is not proof that the meeting never discussed the subject. A separate corrupted-upload test also remains in the demo.
 
-## 6. Gap analysis and next steps
+## 6. Comparison with Assignment 1 and next steps
 
-**Built:** portable recorder role, persistent spool, real authenticated upload/ACK, receiver queue, restart handling, local ASR, registered tools, automatic extractive notes, lexical retrieval, contracts and logs. **Emulated:** microphone capture is replayed from a local recording. An optional Linux arecord adapter is supplied but not hardware-tested. **Simplified:** base.en replaces large-v3 and extractive importance scoring replaces the proposed local LLM. These stages execute; they are not mocked model responses.
+The original local speech-to-notes idea is working, with validation, timestamped output, logging and human review. The prototype also implements a recorder queue and acknowledged transfer, playback, editable notes, deletion, and local RAG answers. Audio/video support expanded beyond MP3/WAV, with a 2-GiB size cap and the same two-hour duration limit.
 
-**Missing/fragile:** tested Pi hardware, continuous recorder service, robust power-loss recovery, diarization, semantic notes/search, per-device enrollment, enforced retention and production service hardening. ASR mistakes and cue-based importance selection are most fragile. Before real users, add encrypted storage/ACLs, authenticated TLS deployment, consent indicators, disk/queue alerts, job heartbeats, ASR timeouts, failure-rate and latency-percentile monitoring, and consented accuracy audits. Move device code to Pi and processor code to server without changing the manifest protocol. Retained transcripts support search and differ intentionally from Part 1 deletion plans.
+The Pi is still emulated with recording files; its microphone adapter is not hardware-tested. Base.en replaces the proposed large-v3 model. Sentence scoring produces automatic notes, while FLAN-T5 answers retrieved-context questions; it does not replace the proposed full-meeting Qwen summarizer. Diarization, inferred owners, semantic topic summaries, automatic model fallback, cache expiration and production deployment are missing. Audio and transcripts are retained for review instead of the original automatic-deletion policy.
 
-## Security limits and run instructions
+The fragile parts are transcription quality, word-based retrieval and the small answer model. Before real users depend on it, I would monitor queue age, stalled jobs, latency percentiles, errors, disk usage, empty retrievals and needs_review results. Human spot checks are needed for accuracy. Next steps include tested Pi capture, per-device credentials, encrypted storage, retention rules and a process supervisor for hard timeouts and recovery.
 
-Loopback HTTP is only for same-PC emulation; remote endpoints/listeners require HTTPS. Certificate loading and verification are implemented; actual remote TLS and Pi hardware deployment were not tested. The minimal HTTP server has no production traffic hardening. The shared token is not per-device authorization. Media, transcripts and notes are plaintext: local AI is not disk encryption or a security certification. Use public/synthetic inputs for this demo.
+## Running it and protecting the recordings
 
-**Run:** follow README setup, then python tools/run_distributed_demo.py. For manual use, run laptop.py serve in one terminal and device.py enqueue FILE followed by device.py send --token-file laptop-state/device.token in another. docs/TWO_ROLE_DEPLOYMENT.md explains later Pi/server placement. Code, synthetic media and authentic evidence accompany this four-page PDF.
+The README provides Windows installation commands for both models. Install FFmpeg/ffprobe, base requirements, CPU PyTorch and requirements-rag.txt first. Then run:
 
-**Primary references:**
-[1] Model sizes: https://github.com/openai/whisper
-[2] Checkpoint/precision: https://huggingface.co/Systran/faster-whisper-base.en
-[3] Media protocol restrictions: https://ffmpeg.org/ffmpeg-protocols.html
+```text
+python securenote.py download-model --model base.en
+python ask.py download-model
+python review.py
+python tools/run_assignment_demo.py --output demo-assignment-new
+```
+
+All inference uses local files. The browser requires a private session and checks mutation requests; remote recorder transfer requires verified HTTPS. Local files are plaintext unless the volume is encrypted. Trash retains recordings until permanent deletion, which also removes this workspace's saved answers but not independent copies or backups.
+
+Validation: 35 tests passed, plus browser checks of local RAG, evidence playback, saved notes and missing evidence. Submit this PDF with SecureNote_Prototype.zip, which includes the matching report, code, README, synthetic recordings and logs.

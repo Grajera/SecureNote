@@ -1,8 +1,78 @@
-# SecureNote 0.4 - local recording review
+# SecureNote 0.5 - local recording review
 
 A workspace for recordings, useful notes and the **full transcript**, with
 clickable timestamps and built-in audio playback. The lightweight recorder and
 laptop/server processor remain separate roles. AI inference stays local.
+
+## Assignment requirement: local retrieval-augmented generation (RAG)
+
+This version implements **retrieval followed by local language-model generation**.
+Ask a question about the selected recording in **Ask this recording**. The app:
+
+1. Validates the question and transcript.
+2. Ranks transcript chunks with TF-IDF cosine similarity (up to 3, score >= 0.20).
+3. Builds a bounded prompt containing the question and those chunks.
+4. Runs **google/flan-t5-small locally on CPU in float32**.
+5. Checks the answer against the supplied wording and attaches timestamped evidence.
+6. Saves answer.json, answer.md, summary.json and stage logs on this computer.
+
+No evidence means **Not found in this recording**, with generation skipped. Answers
+whose wording cannot be found in the supplied text are marked **needs review**.
+This strict lexical check can reject valid paraphrases; it cannot prove an answer
+is factually correct or relevant. Check the source audio. The model never runs
+commands or selects filesystem paths. The assignment is satisfied through **RAG**;
+FFmpeg calls alone are not claimed as AI tool calling.
+
+### One-time RAG setup (Windows PowerShell)
+
+Run from D:\Repos\SecureNotes after replacing application files. Keep your existing
+models and recordings. Install CPU PyTorch first so this small answer model does
+not require a separate PyTorch CUDA installation:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+.\.venv\Scripts\python.exe -m pip install -r requirements-rag.txt
+.\.venv\Scripts\python.exe ask.py download-model
+.\.venv\Scripts\python.exe review.py
+```
+
+The answer checkpoint is about 294 MiB (about 297 MiB including tokenizer files).
+Downloads occur only during setup. Runtime uses local paths, offline flags,
+`local_files_only=True`, safetensors weights and no remote model code. Whisper can
+still use `review.py --device cuda`; that flag selects **speech recognition** only.
+The answer model stays on CPU to avoid competing for the laptop's 6 GB of VRAM.
+
+In the UI, ask a narrow factual question, click its evidence timestamps to listen,
+and choose **Save answer to my notes** when useful. Questions and answer artifacts
+are plaintext under `laptop-state/answers/RECORDING_ID/`; permanent deletion removes
+that workspace's associated answer artifacts. Active answers prevent deletion.
+The current browser response is cleared when switching recordings; saved notebook
+entries persist. Standalone CLI answers live under `rag-runs/` and are managed separately.
+
+### Reproduce the complete assignment
+
+```powershell
+.\.venv\Scripts\python.exe tools/run_assignment_demo.py --output demo-assignment-new
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Choose a new demo folder. The script performs actual recorder-to-receiver transfers,
+local Whisper transcription, and three local RAG answers, then injects an empty
+retrieval result. It blocks Python socket connections during RAG to catch accidental
+network use. It also retains the original corrupted-upload test. All measurements,
+transcripts, answers and JSONL logs are included under `examples/assignment-v05/`.
+The authoritative write-up is `docs/Project_Assignment_2.pdf` (and its Markdown copy).
+
+To ask about an existing processing result from the CLI:
+
+```powershell
+.\.venv\Scripts\python.exe ask.py ask "demo-assignment-new/laptop/results/RESULT_DIRECTORY" "When will Alice send the revised budget?"
+```
+
+Replace RESULT_DIRECTORY with the actual folder created by the demo. A fresh
+installation also needs FFmpeg/ffprobe and `securenote.py download-model --model base.en`.
+Linux uses the same commands with `.venv/bin/python`. No model server or paid API is used.
 
 ## Upgrade your Windows installation
 
@@ -74,7 +144,7 @@ References: [faster-whisper GPU requirements](https://github.com/SYSTRAN/faster-
   cannot be deleted until processing finishes.
 - **Delete permanently** requires a second confirmation and removes the selected
   managed inbox copy, its result directory, this workspace's playback preview,
-  annotations, and browser-import recorder copy. It also applies to explicitly
+  annotations, saved RAG answers, and browser-import recorder copy. It also applies to explicitly
   included/demo state folders. Original imported files, independently managed
   recorder spools, other workspace previews, backups, browser drafts and historic
   metadata logs are not erased. It is file deletion, not secure disk erasure.
@@ -187,6 +257,6 @@ actual Windows microphone and Pi hardware remain untested here.
 
 Whisper base.en, extractive notes and lexical search remain the baseline.
 No diarization, reliable speaker names, semantic summaries, slide understanding
-or production service hardening is claimed. The Assignment 2 report and archived
-execution evidence describe the v0.2 milestone; see docs/RELEASE_NOTES_0_4.md
-for this newer product release.
+or production service hardening is claimed. The current assignment report describes v0.5 and uses actual runs in
+examples/assignment-v05. Earlier examples and release notes remain historical.
+See docs/RELEASE_NOTES_0_5.md.

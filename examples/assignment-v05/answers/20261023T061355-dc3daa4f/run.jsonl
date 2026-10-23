@@ -1,0 +1,20 @@
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.726626+00:00", "stage": "input", "event": "received", "input_characters": 45}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.726680+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.726725+00:00", "stage": "validation", "event": "completed", "latency_ms": 0.04}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.726752+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727014+00:00", "stage": "retrieval", "event": "result", "chunk_count": 1, "threshold": 0.2, "scores": [0.80031]}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727053+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.3}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727082+00:00", "stage": "model_loading", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727139+00:00", "stage": "model_loading", "event": "completed", "latency_ms": 0.06}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727162+00:00", "stage": "prompt_building", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727774+00:00", "stage": "prompt_building", "event": "result", "prompt_tokens": 50, "chunk_ids": [3]}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727831+00:00", "stage": "prompt_building", "event": "completed", "latency_ms": 0.67}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.727861+00:00", "stage": "model_inference", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805018+00:00", "stage": "model_inference", "event": "result", "output_characters": 15}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805216+00:00", "stage": "model_inference", "event": "completed", "latency_ms": 77.35}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805264+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805314+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 0.05}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805341+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805591+00:00", "stage": "output", "event": "result", "files": ["answer.json", "answer.md"], "status": "answered", "source_count": 1, "answer_characters": 15, "answer_sha256": "65aa621cceac5e57c1fe658c82c0f3e68ac97fab6e56167eabda532e3f9962ea", "answer": "discount factor"}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805633+00:00", "stage": "output", "event": "completed", "latency_ms": 0.29}
+{"run_id": "20261023T061355-dc3daa4f", "timestamp": "2026-10-23T06:13:55.805720+00:00", "stage": "run", "event": "finished", "status": "answered", "latency_ms": 79.05}

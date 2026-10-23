@@ -1,0 +1,15 @@
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888549+00:00", "stage": "input", "event": "received", "input_characters": 40}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888608+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888655+00:00", "stage": "validation", "event": "completed", "latency_ms": 0.05}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888684+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888796+00:00", "stage": "retrieval", "event": "result", "chunk_count": 0, "threshold": 0.2, "scores": []}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888833+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.15}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888860+00:00", "stage": "prompt_building", "event": "skipped", "reason": "no_evidence"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888880+00:00", "stage": "model_inference", "event": "skipped", "reason": "no_evidence"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888900+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888918+00:00", "stage": "postprocessing", "event": "result", "status": "not_found", "source_count": 0}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888936+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 0.04}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.888955+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.889106+00:00", "stage": "output", "event": "result", "files": ["answer.json", "answer.md"], "status": "not_found", "source_count": 0, "answer_characters": 28, "answer_sha256": "c5c35c2aba17f20b39b1294f1ccd9bdf3480319ad4f9e93e1e642feaa12c1667", "answer": "Not found in this recording."}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.889138+00:00", "stage": "output", "event": "completed", "latency_ms": 0.18}
+{"run_id": "20261023T061355-9d6c38f4", "timestamp": "2026-10-23T06:13:55.889212+00:00", "stage": "run", "event": "finished", "status": "not_found", "latency_ms": 0.62}

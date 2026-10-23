@@ -1,0 +1,38 @@
+{
+  "version": "0.5",
+  "python_unit_tests": {
+    "passed": 35,
+    "failed": 0
+  },
+  "real_model_examples": "examples/assignment-v05/assignment-evidence.json",
+  "rag_answers": [
+    "by Friday",
+    "discount factor",
+    "encrypted drive"
+  ],
+  "failure_test": "Injected empty retrieval -> not_found; inference skipped",
+  "rag_network_test": "Python socket.connect blocked during generation demo",
+  "browser": {
+    "passed": true,
+    "page_errors": 0,
+    "checks": [
+      "local RAG answer",
+      "evidence timestamp playback",
+      "save answer to notebook",
+      "no-evidence abstention",
+      "recording import and ASR",
+      "microphone synthetic device",
+      "trash/restore/purge",
+      "mobile layout"
+    ]
+  },
+  "hardware_limitations": [
+    "Windows CUDA not executed on test host",
+    "Pi hardware not tested"
+  ],
+  "models": {
+    "asr": "Whisper base.en CPU int8",
+    "rag": "google/flan-t5-small CPU float32",
+    "rag_parameters": 76961152
+  }
+}

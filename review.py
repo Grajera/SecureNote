@@ -30,8 +30,10 @@ ROOT = Path(__file__).resolve().parent
 
 class WorkspaceServer(ThreadingHTTPServer):
     daemon_threads = True
-    def __init__(self, address, processor, roots=()):
+    def __init__(self, address, processor, roots=(), rag_model_directory="models/flan-t5-small"):
         self.processor = processor
+        self.rag_model_directory = Path(rag_model_directory)
+        self.rag_active = set()
         self.token = read_token(processor.state / "device.token")
         self.store = ReviewStore(processor.state, roots)
         self.launch_key = secrets.token_hex(32)
@@ -231,8 +233,30 @@ class WorkspaceHandler(Handler):
             if len(parts) != 4 or parts[:2] != ["api", "jobs"]:
                 return self.reply(404, {"error": "Not found"})
             identifier = validate_identifier(parts[2])
+            if parts[3] == "ask":
+                from prototype.rag import answer_question
+                payload = self.read_json()
+                if set(payload) != {"question"}:
+                    raise ValueError("Expected a question")
+                with self.server.store.lock:
+                    detail = self.server.store.detail(identifier)
+                    if detail["status"] != "completed" or detail["annotation"].get("trashed"):
+                        raise ValueError("Choose a completed recording outside Trash")
+                    if identifier in self.server.rag_active:
+                        raise RuntimeError("An answer for this recording is still running")
+                    self.server.rag_active.add(identifier)
+                try:
+                    _, result, summary = answer_question(detail["segments"], detail["duration"],
+                        payload["question"], self.server.rag_model_directory,
+                        self.server.processor.state / "answers" / identifier, source=identifier)
+                finally:
+                    with self.server.store.lock:
+                        self.server.rag_active.discard(identifier)
+                return self.reply(200 if summary["status"] != "failed" else 400, result)
             if parts[3] in ("trash", "restore", "purge"):
-                with self.server.processor.lock:
+                with self.server.processor.lock, self.server.store.lock:
+                    if identifier in self.server.rag_active:
+                        raise RuntimeError("Wait for the current answer to finish before deleting")
                     result = self.server.store.purge(identifier) if parts[3] == "purge" else self.server.store.trash(identifier, parts[3] == "restore")
                 return self.reply(200, result)
             if parts[3] == "review":
@@ -257,6 +281,7 @@ def main():
     parser = argparse.ArgumentParser(description="SecureNote local review workspace")
     parser.add_argument("--state", default="laptop-state")
     parser.add_argument("--model-dir", default="models/base.en")
+    parser.add_argument("--rag-model-dir", default="models/flan-t5-small")
     parser.add_argument("--include-state", action="append", default=[])
     parser.add_argument("--port", type=int, default=8787)
     parser.add_argument("--no-browser", action="store_true")
@@ -268,7 +293,7 @@ def main():
     # Discover only known demo directories beneath this project, not arbitrary disks.
     roots = args.include_state + [str(path) for path in Path.cwd().glob("demo*/laptop")]
     processor = Processor(args.state, args.model_dir, device=args.device)
-    server = WorkspaceServer(("127.0.0.1", args.port), processor, roots)
+    server = WorkspaceServer(("127.0.0.1", args.port), processor, roots, args.rag_model_dir)
     processor.start()
     launch_url = server.origin + "/#session=" + server.launch_key
     print("SecureNote review is running locally. Open this private launch link:", flush=True)

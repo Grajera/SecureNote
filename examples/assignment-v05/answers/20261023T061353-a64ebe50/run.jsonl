@@ -1,0 +1,20 @@
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.224332+00:00", "stage": "input", "event": "received", "input_characters": 40}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.224434+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.224622+00:00", "stage": "validation", "event": "completed", "latency_ms": 0.18}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.224675+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.225009+00:00", "stage": "retrieval", "event": "result", "chunk_count": 1, "threshold": 0.2, "scores": [0.894427]}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.225061+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.38}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:53.225093+00:00", "stage": "model_loading", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.632203+00:00", "stage": "model_loading", "event": "completed", "latency_ms": 2407.1}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.632323+00:00", "stage": "prompt_building", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.633715+00:00", "stage": "prompt_building", "event": "result", "prompt_tokens": 47, "chunk_ids": [2]}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.633785+00:00", "stage": "prompt_building", "event": "completed", "latency_ms": 1.46}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.633824+00:00", "stage": "model_inference", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725229+00:00", "stage": "model_inference", "event": "result", "output_characters": 9}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725409+00:00", "stage": "model_inference", "event": "completed", "latency_ms": 91.58}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725454+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725535+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 0.08}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725571+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725929+00:00", "stage": "output", "event": "result", "files": ["answer.json", "answer.md"], "status": "answered", "source_count": 1, "answer_characters": 9, "answer_sha256": "cce4c196fef4d647c22a24c1015dab86923b61a51e0df961f4096e74577a53f5", "answer": "by Friday"}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.725976+00:00", "stage": "output", "event": "completed", "latency_ms": 0.4}
+{"run_id": "20261023T061353-a64ebe50", "timestamp": "2026-10-23T06:13:55.726066+00:00", "stage": "run", "event": "finished", "status": "answered", "latency_ms": 2501.89}

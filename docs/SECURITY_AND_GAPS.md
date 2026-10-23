@@ -12,7 +12,11 @@ interrupted processing is retried on startup. Logs track capture, transfers,
 job states, inference stages, output summaries and timing without content by
 default. The previous standalone pipeline remains a diagnostic utility.
 
-Inference, note extraction and search remain local. The portable device role
+Inference, note extraction, search and retrieval-augmented answer generation remain local.
+FLAN-T5-small receives only the selected transcript chunks and question. Offline
+loading, safetensors and disabled remote code are enforced. Answer text is never
+executed. A lexical source match is not proof of correctness or prompt-injection
+resistance; a human checks the evidence. Answer artifacts are plaintext. The portable device role
 requires only Python standard-library code; the processor owns FFmpeg and AI
 dependencies. Remote HTTP clients and non-loopback plaintext listeners are
 refused. HTTPS supports certificate loading/verification and custom trust CAs.
@@ -24,7 +28,8 @@ Microphone capture is replayed from a file. An optional Linux arecord adapter is
 provided but Pi microphone hardware, continuous capture service, power/storage
 management and recording indicators are untested/missing. The real transfer
 protocol and queue are implemented now, not deferred. CPU Whisper base.en and
-extractive notes replace the proposed large ASR/LLM pair. Diarization, verified
+extractive notes replace the proposed large ASR/LLM pair for automatic notes.
+Local FLAN-T5 now answers short questions from retrieved evidence. Diarization, verified
 speakers, semantic summaries/search, per-device enrollment, key rotation,
 retention automation, disk quotas and production server hardening remain work.
 Actual remote TLS deployment has not been tested on the user's network.
