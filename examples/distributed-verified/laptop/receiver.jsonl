@@ -1,0 +1,10 @@
+{"timestamp": "2026-10-23T01:13:47.650840+00:00", "stage": "transfer_validation", "event": "accepted", "recording_id": "0267963dfa3844cdb7f8566cdbe52edd", "input_bytes": 826348, "duplicate": false, "latency_ms": 6.11}
+{"timestamp": "2026-10-23T01:13:47.653089+00:00", "stage": "processor", "event": "started", "recording_id": "0267963dfa3844cdb7f8566cdbe52edd"}
+{"timestamp": "2026-10-23T01:13:49.303943+00:00", "stage": "processor", "event": "finished", "recording_id": "0267963dfa3844cdb7f8566cdbe52edd", "status": "completed", "result_directory": "20261023T011347-8197ac9f", "latency_ms": 1647.99}
+{"timestamp": "2026-10-23T01:13:49.437825+00:00", "stage": "transfer_validation", "event": "accepted", "recording_id": "b71f62e65d7d48f8a3e22df7ea7038e2", "input_bytes": 98238, "duplicate": false, "latency_ms": 2.46}
+{"timestamp": "2026-10-23T01:13:49.439561+00:00", "stage": "processor", "event": "started", "recording_id": "b71f62e65d7d48f8a3e22df7ea7038e2"}
+{"timestamp": "2026-10-23T01:13:51.238468+00:00", "stage": "processor", "event": "finished", "recording_id": "b71f62e65d7d48f8a3e22df7ea7038e2", "status": "completed", "result_directory": "20261023T011349-0d8968d7", "latency_ms": 1797.16}
+{"timestamp": "2026-10-23T01:13:51.431132+00:00", "stage": "transfer_validation", "event": "accepted", "recording_id": "1de467a48ea6427990fcee9dfb5ae63a", "input_bytes": 225989, "duplicate": false, "latency_ms": 3.79}
+{"timestamp": "2026-10-23T01:13:51.432562+00:00", "stage": "processor", "event": "started", "recording_id": "1de467a48ea6427990fcee9dfb5ae63a"}
+{"timestamp": "2026-10-23T01:13:52.889553+00:00", "stage": "processor", "event": "finished", "recording_id": "1de467a48ea6427990fcee9dfb5ae63a", "status": "completed", "result_directory": "20261023T011351-7df5bb1e", "latency_ms": 1454.7}
+{"timestamp": "2026-10-23T01:13:52.921982+00:00", "stage": "transfer_validation", "event": "rejected", "error_type": "ValueError", "latency_ms": 4.64}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "run_id": "20261023T011351-7df5bb1e",
+  "status": "ok",
+  "runtime": {
+    "os": "Linux",
+    "machine": "x86_64",
+    "python": "3.12.14",
+    "cpu_count": 9
+  },
+  "model": {
+    "directory_name": "base.en",
+    "device": "cpu",
+    "compute_type": "int8",
+    "cpu_threads": 4
+  },
+  "content_logging": false,
+  "failure_injection": false,
+  "input_bytes": 225989,
+  "duration_seconds": 22.698005,
+  "container": "mov,mp4,m4a,3gp,3g2,mj2",
+  "decoded_audio": {
+    "duration_seconds": 22.709125,
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "sample_width_bytes": 2
+  },
+  "recognition": {
+    "language": "en",
+    "language_probability": 1
+  },
+  "segment_count": 7,
+  "transcript_characters": 330,
+  "output": {
+    "files": [
+      "notes.md",
+      "notes.json",
+      "transcript.txt",
+      "transcript.json",
+      "search.json"
+    ],
+    "note_count": 7,
+    "notes_sha256": "210aa2400d00962b9a52b5300d0c28d63674c5d144db596f6477914127f6087d",
+    "search_matches": 1
+  },
+  "latency_ms": 1454.7
+}

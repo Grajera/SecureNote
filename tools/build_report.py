@@ -17,7 +17,7 @@ from reportlab.platypus import (KeepTogether, PageBreak, Paragraph, Preformatted
                                SimpleDocTemplate, Spacer)
 
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE = json.loads((ROOT / "examples/verified/evidence.json").read_text())
+EVIDENCE = json.loads((ROOT / "examples/distributed-verified/evidence.json").read_text())
 RUNS = {run["label"]: run for run in EVIDENCE["runs"]}
 NAVY = colors.HexColor("#17324d")
 TEAL = colors.HexColor("#116c78")
@@ -60,200 +60,114 @@ def code(text):
 
 
 def architecture():
-    drawing = Drawing(490, 307)
+    drawing = Drawing(490, 305)
     boxes = [
-        ("INPUT", "Local audio/video file + optional query"),
-        ("VALIDATION", "Size, duration, audio track; inspect_media tool"),
-        ("PREPROCESSING", "decode_audio tool: 16 kHz mono PCM"),
-        ("MODEL INFERENCE", "Offline Whisper base.en, CPU int8"),
-        ("POSTPROCESSING", "ASR contract; automatic extractive notes"),
-        ("RETRIEVAL TOOL", "search_transcript: TF-IDF evidence lookup"),
-        ("OUTPUT", "Transcript, notes, search JSON and Markdown"),
+        ("INPUT - RECORDER ROLE", "Replay audio/video as emulated capture"),
+        ("DEVICE QUEUE", "Persist media, ID, size and SHA-256 manifest"),
+        ("TRANSFER", "Token-authenticated upload; retain until ACK"),
+        ("VALIDATION - PROCESSOR ROLE", "Verify size/hash -> ACK; validate media/audio"),
+        ("MODEL INFERENCE", "decode_audio tool -> offline Whisper CPU int8"),
+        ("POSTPROCESSING", "ASR contract; importance scoring; dynamic notes"),
+        ("OUTPUT + RETRIEVAL TOOL", "Transcript, notes, timestamped search_transcript"),
     ]
     for index, (title, detail) in enumerate(boxes):
         y = 264 - index * 38
-        drawing.add(Rect(5, y, 318, 31, rx=4, fillColor=colors.HexColor("#eef5f8"), strokeColor=colors.HexColor("#b4cbd5")))
-        drawing.add(String(15, y + 19, title, fontName="ReportSansBold", fontSize=8.4, fillColor=NAVY))
-        drawing.add(String(15, y + 7, detail, fontName="ReportSans", fontSize=8.1))
-        if index < len(boxes) - 1:
-            drawing.add(Line(164, y, 164, y - 7, strokeColor=TEAL))
-            drawing.add(Polygon([161, y - 4, 167, y - 4, 164, y - 7], fillColor=TEAL, strokeColor=TEAL))
-        drawing.add(Line(323, y + 15, 350, y + 15, strokeColor=colors.HexColor("#8ba6af"), strokeDashArray=[2, 2]))
-    drawing.add(Rect(350, 36, 133, 259, rx=4, fillColor=colors.HexColor("#ecf7f3"), strokeColor=TEAL))
-    for index, text in enumerate(["LOGGING", "Run ID and input size", "Stage start / finish / failure", "Stage and total latency", "Output files, counts, hash", "Content omitted by default", "Synthetic demos opt in"]):
-        drawing.add(String(359, 274 - 17 * index, text, fontName="ReportSansBold" if index == 0 else "ReportSans", fontSize=8.2, fillColor=NAVY))
-    drawing.add(Rect(5, 0, 478, 25, fillColor=None, strokeColor=colors.HexColor("#8b8b8b"), strokeDashArray=[4, 3]))
-    drawing.add(String(13, 9, "PLANNED: Pi recorder / secure offload; diarization; local LLM; retention controls", fontName="ReportSans", fontSize=8.1))
-    story.append(drawing)
-    story.append(Spacer(1, 8))
-    markdown.extend([(ROOT / "docs/architecture.md").read_text().split("## Boundary 1")[0], ""])
+        fill = "#ecf7f3" if index < 3 else "#eef5f8"
+        drawing.add(Rect(5, y, 318, 31, rx=4, fillColor=colors.HexColor(fill), strokeColor=colors.HexColor("#b4cbd5")))
+        drawing.add(String(14, y+19, title, fontName="ReportSansBold", fontSize=8))
+        drawing.add(String(14, y+7, detail, fontName="ReportSans", fontSize=7.8))
+        if index < 6:
+            drawing.add(Line(164, y, 164, y-7, strokeColor=TEAL))
+            drawing.add(Polygon([161,y-4,167,y-4,164,y-7], fillColor=TEAL, strokeColor=TEAL))
+        drawing.add(Line(323,y+15,350,y+15,strokeColor=TEAL,strokeDashArray=[2,2]))
+    drawing.add(Rect(350,36,133,259,rx=4,fillColor=colors.HexColor("#f2f5f8"),strokeColor=TEAL))
+    for index,text in enumerate(["LOGGING", "Recorder: capture + queue", "Transfers: ACK / retry", "Receiver: accept / reject", "Job: queued / processing", "Pipeline: stage latency", "Output: files, counts, hash", "No transcript bodies", "in deployment logs"]):
+        drawing.add(String(358,274-index*17,text,fontName="ReportSansBold" if index==0 else "ReportSans",fontSize=7.6))
+    drawing.add(Rect(5,0,478,25,fillColor=None,strokeColor=colors.grey,strokeDashArray=[4,3]))
+    drawing.add(String(12,9,"PLANNED / UNTESTED: Pi microphone hardware; diarization; local LLM; retention controls",fontName="ReportSans",fontSize=7.7))
+    story.extend([drawing,Spacer(1,8)])
+    markdown.extend([(ROOT/'docs/architecture.md').read_text().split('## Boundary 1')[0], ''])
 
 
-story.append(Paragraph("SecureNote", styles["Title2"]))
-story.append(Paragraph("ECE 6540 | Project Assignment 2 | Michael Grajera | October 22, 2026", styles["Sub"]))
-paragraph("<b>First working prototype: local recording to transcript, notes and search.</b> "
-          "The target users are students and meeting participants who need useful records without hosted model inference. "
-          "This version processes an existing recording on a laptop/server. A dedicated Pi Zero 2 recorder and secure offload remain future work.")
-heading("1. Implemented architecture")
+story.append(Paragraph('SecureNote',styles['Title2']))
+story.append(Paragraph('ECE 6540 | Project Assignment 2 | Michael Grajera | October 22, 2026',styles['Sub']))
+paragraph('<b>First working prototype: emulated recorder to laptop processor.</b> Two independent roles run on one laptop now: a lightweight recorder queues and transfers media; the receiver runs local AI and produces searchable notes. Later, the recorder moves to a Pi Zero 2 W and the receiver moves to a server. Their transfer contract remains the same.')
+heading('1. Implemented prototype architecture')
 architecture()
-paragraph("Each box marks a stage boundary. Registered local tools have fixed names and signatures: "
-          "<b>inspect_media</b>, <b>decode_audio</b> and <b>search_transcript</b>. The controller chooses these calls, "
-          "validates their results and logs execution. This implements the tool-call option; it is not an LLM-selected "
-          "agent loop or full RAG. Retrieval uses only this recording's transcript.")
-heading("What runs now")
-paragraph("The CLI accepts common FFmpeg-decodable audio/video containers, checks for a local nonempty file "
-          "up to 2 GiB and 2 hours, validates an audio track and converts it to mono 16 kHz PCM. Whisper produces "
-          "text and timestamps. Postprocessing joins sentence fragments, scores importance, groups candidate "
-          "decisions/actions/questions/key points and omits empty sections. Notes copy transcript sentences; "
-          "owners and deadlines are never invented. A local desktop wrapper is also supplied.")
-paragraph("<b>Security boundary:</b> setup downloads code and weights; processing requires local weights and uses "
-          "offline mode. There is no network listener or remote inference. Temporary decoded audio is cleaned up "
-          "on ordinary completion/errors. Sources and outputs remain plaintext local files for review/search; "
-          "encrypted storage and access control must come from the operating environment.", small=True)
+paragraph('<b>Device side:</b> device.py imports a recording to emulate capture, writes a persistent spool and manifest, uploads bytes and records acknowledgment. Failed transfers remain queued for retry. <b>Laptop side:</b> laptop.py authenticates the request, verifies its size/hash, publishes a stored job, acknowledges delivery and processes one recording at a time. Acknowledgment means stored, not that transcription succeeded.')
+paragraph('Processing validates media, invokes allowlisted inspect_media/decode_audio tools, runs local Whisper, validates ASR segments, selects important transcript sentences, omits empty note sections and calls the search_transcript retrieval tool. This satisfies the tool-call option. Search is lexical retrieval, not full RAG or an LLM agent loop.')
+paragraph('<b>Separation and security:</b> the device uses only Python standard-library code; all model dependencies remain on the laptop. Loopback HTTP emulates transfer on one computer. Separate-machine operation requires HTTPS with certificate verification. A bearer token protects uploads/status. Media, queue data and results are plaintext and require protected storage. No hosted model API is used.',small=True)
 
 story.append(PageBreak())
-heading("2. Three actual end-to-end runs")
-paragraph("Inputs are included synthetic recordings generated locally with eSpeak. Actual inference ran on "
-          "a Linux x86-64 AMD EPYC 9V74 host (9 visible CPUs), Python 3.12.14, four inference threads, CPU int8. "
-          "Python socket connections were blocked throughout these runs; media tools allowed only local file "
-          "protocol. These are short smoke tests, not laptop benchmarks or meeting-accuracy measurements.", small=True)
-
-examples = [
-    ("business", "A. Business meeting / WAV", "We decided to use the local server... Alice will send the revised budget by Friday.",
-     "Decision: We decided to use the local server for all meeting recordings.",
-     "Action: Alice will send the revised budget by Friday."),
-    ("lecture", "B. Class lecture / MP3", "Remember, the discount factor controls how much future rewards matter. The homework is due on Friday.",
-     "Key point: Remember, the discount factor controls how much future rewards matter.",
-     "Key point: The homework is due on Friday."),
-    ("planning", "C. Recorder planning / MP4 video", "We agreed to keep the original recordings on an encrypted drive... The important constraint is battery life.",
-     "Decision: We agreed to keep the original recording on an encrypted drive.",
-     "Key point: The important constraint is battery life."),
+heading('2. Three real recorder-to-processor runs')
+paragraph('The demo launches the laptop receiver and invokes the recorder as separate OS processes. Synthetic recordings are imported, actually uploaded over loopback HTTP, acknowledged and transcribed locally. Execution used Linux x86-64, AMD EPYC 9V74, Python 3.12.14 and four CPU inference threads. These are short smoke tests, not performance estimates for the Windows laptop. The earlier standalone inference tests also blocked Python socket connections.',small=True)
+receiver_events=[json.loads(line) for line in (ROOT/'examples/distributed-verified/laptop/receiver.jsonl').read_text().splitlines()]
+examples=[
+ ('business','A. Business meeting / WAV','Alice will send the revised budget by Friday.',
+  'Decision: We decided to use the local server for all meeting recordings.','Action: Alice will send the revised budget by Friday.'),
+ ('lecture','B. Class lecture / MP3','Remember, the discount factor controls how much future rewards matter.',
+  'Key point: Remember, the discount factor controls how much future rewards matter.','Key point: The homework is due on Friday.'),
+ ('planning','C. Recorder planning / MP4','We agreed to keep the original recordings on an encrypted drive.',
+  'Decision: We agreed to keep the original recording on an encrypted drive.','Key point: The important constraint is battery life.'),
 ]
-for label, title, input_excerpt, note1, note2 in examples:
-    example = RUNS[label]
-    summary = example["summary"]
-    log_events = [json.loads(line) for line in (ROOT / example["run_directory"] / "run.jsonl").read_text().splitlines()]
-    asr = next(event for event in log_events if event["stage"] == "model_inference" and event["event"] == "completed")
+for label,title,source,note1,note2 in examples:
+    example=RUNS[label]
+    summary=example['summary']
+    identifier=example['manifest']['recording_id']
+    accepted=next(e for e in receiver_events if e.get('recording_id')==identifier and e['stage']=='transfer_validation')
     heading(title)
-    paragraph(f"<b>Input:</b> {escape(Path(example['input']).name)}; {summary['input_bytes']:,} bytes; "
-              f"{summary['duration_seconds']:.2f} s. Source excerpt: &quot;{escape(input_excerpt)}&quot;<br/>"
-              f"<b>Output excerpts:</b> {escape(note1)} {escape(note2)}<br/>"
-              f"<b>Search:</b> &quot;{escape(example['query'])}&quot; returned {summary['output']['search_matches']} "
-              f"passage(s), with source intervals in the output. Total: {summary['latency_ms']/1000:.3f} s; "
-              f"{summary['output']['note_count']} candidate notes.")
-    code(f'{{"stage":"input","event":"received","input_bytes":{summary["input_bytes"]}}}\n'
-         f'{{"stage":"model_inference","event":"completed",\n'
-         f' "latency_ms":{asr["latency_ms"]}}}\n'
-         f'{{"stage":"run","event":"finished","status":"ok",\n'
-         f' "latency_ms":{summary["latency_ms"]}}}')
-paragraph("Log excerpts above project a few fields from the raw JSONL; full run IDs, stage events, synthetic "
-          "logged note bodies, transcripts and search scores are in examples/verified/. The lecture also "
-          "misheard 'maps a state' as 'map sustained' and corrupted its last question. These errors remain "
-          "in the artifacts and show why review is necessary. Reproduce with: "
-          "<b>python tools/run_examples.py --model-dir models/base.en</b>.", small=True)
+    paragraph(f"<b>Input:</b> {escape(example['input'])}; {summary['input_bytes']:,} bytes; {summary['duration_seconds']:.2f} s. Source excerpt: &quot;{escape(source)}&quot;<br/>"
+              f"<b>Output:</b> {escape(note1)} {escape(note2)}<br/>"
+              f"<b>Result:</b> device delivered; processor completed; {summary['output']['note_count']} notes. Pipeline {summary['latency_ms']/1000:.3f} s; capture/transfer/processing {example['transfer_and_processing_ms']/1000:.3f} s.")
+    code(f'{{"stage":"transfer_validation","event":"accepted",\n'
+         f' "input_bytes":{summary["input_bytes"]},"latency_ms":{accepted["latency_ms"]}}}\n'
+         f'{{"stage":"processor","event":"finished",\n'
+         f' "status":"completed","latency_ms":{summary["latency_ms"]}}}')
+paragraph('Excerpts project fields from genuine JSONL records. Full manifests, delivery receipts, receiver logs, ASR transcripts, notes and job states are under examples/distributed-verified/. Automatic notes also include timestamped search results. Query an existing transcript using securenote.py search RESULT-DIRECTORY "budget". The lecture misheard parts of its definition and final question; the artifacts preserve these errors rather than concealing them.',small=True)
+paragraph('<b>Reproduce:</b> python tools/run_distributed_demo.py --output demo-two-role. This also performs the intentional corrupt-transfer failure test. No Pi, microphone or external server is needed for the demo.',small=True)
 
 story.append(PageBreak())
-heading("3. Two stage interfaces")
-heading("Boundary A - Model inference to postprocessing")
-paragraph("<b>Input type/shape:</b> the model receives a one-dimensional float32 waveform (N samples), "
-          "mono at 16,000 Hz, approximately [-1,1), with 0 &lt; N/16000 &lt;= 7200 seconds. Its adapter emits "
-          "a JSON-compatible list of {start: float, end: float, text: str}.")
-paragraph("<b>Output type/shape:</b> postprocessing produces sentence passages "
-          "[{id: int, start: float, end: float, text: str}] and a dictionary of nonempty note sections, "
-          "each holding selected source passages plus importance_score. Intervals cover all contributing "
-          "ASR segments, so sentence times are approximate.")
-paragraph("<b>Missing/invalid behavior:</b> at most 100,000 segments; nonempty text up to 20,000 characters "
-          "per segment; finite 0 &lt;= start &lt;= end &lt;= duration + 1 second, and ordered starts. "
-          "A wrong type or invalid time raises ValueError and stops note output. An empty list is valid "
-          "silence: status no_speech, explicit message and no candidate notes. The one-second endpoint "
-          "tolerance accommodates ASR padding; it does not establish word-level timing accuracy.")
-heading("Boundary B - Retrieval tool to formatter")
-paragraph("<b>Input type/shape:</b> validated passages, query string of 1-512 total characters with at "
-          "least one non-whitespace character, and integer limit 1-20 (default 5). "
-          "<b>Tool output:</b> up to limit objects {id, start, end, text, score}; score is TF-IDF cosine similarity.")
-paragraph("<b>Formatter output:</b> timestamped Markdown evidence bullets and JSON results. Every returned "
-          "ID/text/time must match an existing passage. Scores must be finite within [0,1], allowing 1e-6 "
-          "numerical tolerance. Malformed results fail the stage. No positive matches returns [] and "
-          "'No matching passages found'; the system does not manufacture an answer. Scores are not confidence probabilities.")
-heading("4. Model choice and assumptions")
-paragraph("<b>Whisper base.en</b> (74 million parameters), using faster-whisper 1.2.1/CTranslate2 4.6.0, "
-          "was selected for a small, CPU-capable prototype [1,2]. The local model files are about 141 MiB. "
-          "No paid inference service is used; costs are local compute/storage. The intended Windows laptop "
-          "has an i5-13420H, 32 GB RAM and RTX 4050 6 GB, but its actual performance was not measured here. "
-          "The tested path uses CPU and needs no CUDA installation.")
-paragraph("<b>Reduced precision:</b> the converted checkpoint stores FP16 weights [2]; runtime uses int8 "
-          "compute. Observed end-to-end times for the three short files were "
-          f"{RUNS['business']['summary']['latency_ms']/1000:.3f}, {RUNS['lecture']['summary']['latency_ms']/1000:.3f} and "
-          f"{RUNS['planning']['summary']['latency_ms']/1000:.3f} seconds. Transcription errors occurred, "
-          "but no float32 accuracy comparison was performed, so errors cannot be attributed to quantization.")
-paragraph("<b>Assumption 1:</b> intended input is intelligible English speech with limited overlap; "
-          "base.en does not promise multilingual or reliable speaker identification. "
-          "<b>Assumption 2:</b> ASR text and timestamps are fallible evidence, not authoritative records. "
-          "Users must verify high-impact notes; structural validity cannot establish factual correctness.")
+heading('3. Two stage interfaces')
+heading('Boundary A - Recorder transfer to receiver queue')
+paragraph('<b>Input:</b> POST /v1/recordings with raw media bytes, one Content-Length, bearer token and a base64 JSON manifest: {schema_version: "1.0", recording_id: 32-char hex, device_id: 1-64 safe characters, captured_at: ISO-8601, input_bytes: int, sha256: 64-char hex}. Maximum size is 2 GiB; manifest header is at most 2048 bytes. Device filenames never choose receiver paths.')
+paragraph('<b>Output:</b> a stored recording, manifest and queued job, plus HTTP 201 receipt {recording_id, input_bytes, sha256, status: "accepted"}; an identical repeat returns HTTP 200 without a second job. The recorder compares the receipt before marking delivered. A separate authenticated status query reports queued, processing, completed or failed.')
+paragraph('<b>Missing/invalid:</b> missing authentication returns 401. Invalid manifest, size disagreement, corrupt bytes or conflicting ID return 400 without publishing a job. Interrupted uploads are not processed. Failed/missing acknowledgment leaves the recorder item queued for retry. Accepted media still undergoes audio-track/duration/format validation before inference. Delivery does not imply valid speech.')
+heading('Boundary B - Model inference to postprocessing')
+paragraph('<b>Input:</b> mono waveform float32 array (N,), 16,000 Hz, approximately [-1,1), duration 0-7200 s excluding zero. The ASR adapter emits list[{start: float, end: float, text: str}]. <b>Output:</b> sentence passages [{id, start, end, text}] and nonempty note sections containing selected source passages plus importance scores. Sentence fragments are joined across ASR segments; intervals are approximate.')
+paragraph('<b>Missing/invalid:</b> reject non-list/oversized output, empty or wrong-type text, nonfinite times, inverted intervals or unordered starts. Limits: 100,000 segments, 20,000 characters/segment, 0 &lt;= start &lt;= end &lt;= duration + 1 s. Invalid results fail the job before notes. An empty list yields no_speech with an explicit message and zero notes. Structural checks cannot establish transcription accuracy.')
+heading('4. Model choice and assumptions')
+paragraph('<b>Whisper base.en</b>, 74M parameters [1], runs with faster-whisper 1.2.1/CTranslate2 4.6.0 on the processor. The checkpoint stores FP16 weights [2]; inference uses CPU int8. Local weights occupy about 141 MiB; there is no paid inference service. Three short two-role runs completed successfully with pipeline times of '+', '.join(f"{RUNS[label]['summary']['latency_ms']/1000:.3f}" for label in ['business','lecture','planning'])+' s. ASR mistakes occurred. No float32 accuracy comparison was done, so their cause cannot be attributed to quantization.')
+paragraph('The intended laptop has an i5-13420H, 32 GB RAM and RTX 4050 6 GB; its actual performance was not measured. CPU mode avoids GPU driver requirements. <b>Assumption 1:</b> intelligible English speech, limited overlap; no reliable speaker identity is assumed. <b>Assumption 2:</b> transcripts/timestamps are fallible evidence; a user verifies consequential notes. Neither note selection nor the model invents an action owner or deadline intentionally.')
 
 story.append(PageBreak())
-heading("5. Intentional failure and analysis")
-failure = RUNS["malformed_model_output"]
-failure_log = [json.loads(line) for line in (ROOT / failure["run_directory"] / "run.jsonl").read_text().splitlines()]
-failed_event = next(event for event in failure_log if event["stage"] == "postprocessing" and event["event"] == "failed")
-paragraph("<b>What changed:</b> after real ASR on business.wav, --inject-invalid-segment replaces the "
-          "adapter output with [{start: 0.0, end: 1.0, text: 123}]. This deliberately simulates a malformed "
-          "model adapter, rather than altering the original recording.")
-paragraph("<b>Result:</b> the process reported a controlled failure; the CLI maps failed runs to exit code 2. "
-          "No notes were written and no silent wrong answer was returned. The run recorded ValueError at "
-          "the model-to-postprocessing contract. <b>Which boundary let it through?</b> The simulated ASR "
-          "adapter emitted the bad object, but its receiving contract rejected it; no downstream boundary "
-          "accepted it. Cleanup removed the temporary decoded WAV.")
-code(f'{{"stage":"postprocessing","event":"failed",\n'
-     f' "latency_ms":{failed_event["latency_ms"]},"error_type":"ValueError"}}\n'
-     f'{{"stage":"run","event":"finished","status":"failed",\n'
-     f' "latency_ms":{failure["summary"]["latency_ms"]}}}')
-paragraph("<b>What to add:</b> keep the structural checks, validate configuration/schema versions at "
-          "startup, and add labeled noisy/overlapping speech tests and human review. Plausible but "
-          "incorrect transcript text passes shape validation. Other verification: seven contract tests "
-          "passed; malformed retrieval output was rejected; an empty file never reached inference; "
-          "two seconds of silence produced no_speech and zero notes. Existing-run search returned an "
-          "explicit empty result for an absent term.")
-heading("6. Gap analysis and next steps")
-paragraph("<b>Built:</b> validated local media input, real ASR, registered tools, automatic extractive "
-          "importance/formatting, source-linked lexical search, stage contracts and per-run logging. "
-          "<b>Simplified:</b> base.en replaces large-v3; deterministic candidate-note extraction replaces "
-          "the proposed Qwen LLM. This is working baseline logic, not a stubbed model. "
-          "<b>Missing:</b> Pi capture/offload, diarization and verified speakers, implicit action reasoning, "
-          "semantic search, cache, multiuser security and enforced retention. Diagrams mark these as planned.")
-paragraph("<b>Most fragile:</b> ASR mistakes and cue-based importance selection, especially indirect "
-          "commitments, quotations and jargon. Transcript retention intentionally differs from Part 1 "
-          "because this prototype needs searchable evidence. Before real-user operation, add encrypted "
-          "storage/ACL deployment, authenticated offload with integrity checks, retention enforcement, "
-          "ASR process timeouts/heartbeats, disk/queue monitoring, stage failure rates, latency percentiles "
-          "and consented accuracy audits. Keep content out of operational metrics. The next functional "
-          "steps are real lecture/meeting evaluation, optional local LLM notes, then Pi capture/transfer.")
-heading("Security limits and submission contents")
-paragraph("File-only media protocols and argument-list subprocess calls reduce accidental remote access; "
-          "they are not a decoder sandbox [3]. This is not a certified confidential system: no built-in "
-          "encryption, authentication or secure erasure exists. Use public/synthetic data for this demo. "
-          "The ZIP contains the README, runnable code, synthetic media, complete evidence and this report. "
-          "Model weights/dependencies require one-time setup or approved offline transfer. The desktop "
-          "window was not interactively tested on Windows, and no Pi hardware was tested.", small=True)
-paragraph("<b>Primary references:</b><br/>"
-          "[1] Whisper model sizes: https://github.com/openai/whisper<br/>"
-          "[2] Checkpoint and precision: https://huggingface.co/Systran/faster-whisper-base.en<br/>"
-          "[3] FFmpeg protocols: https://ffmpeg.org/ffmpeg-protocols.html", small=True)
+heading('5. Intentional transfer failure')
+paragraph('<b>What changed:</b> after the emulated device prepared a legitimate recording and SHA-256 manifest, the demo flipped one byte of the uploaded body while retaining the original checksum. Authentication and byte count were correct. This intentionally breaks the recorder-to-receiver data contract.')
+paragraph('<b>Result:</b> the receiver returned HTTP 400, logged a validation failure, cleaned up partial storage and published no processing job. It did not crash or silently generate wrong notes. The device copy remained queued and intact. <b>Which boundary let it through?</b> the simulated sender supplied corrupt bytes; the receiver intake boundary caught them before ASR. No downstream stage accepted the damaged payload.')
+rejected=next(e for e in receiver_events if e['stage']=='transfer_validation' and e['event']=='rejected')
+code(f'{{"stage":"transfer_validation","event":"rejected",\n'
+     f' "error_type":"ValueError","latency_ms":{rejected["latency_ms"]}}}\n'
+     '{"http_status":400,"published_job":false,\n "device_status":"queued"}')
+paragraph('<b>What to add:</b> the checksum catches accidental corruption, while the token and TLS protect the channel. Add per-device credentials, key rotation, storage quotas, explicit retry scheduling/backoff and labeled speech-quality checks. A checksum alone cannot establish sender identity or factual accuracy. Fourteen tests passed, including corrupted transfer, wrong token, queue persistence across receiver restart, unavailable receiver, idempotent retransmission and model/retrieval contracts.')
+heading('6. Gap analysis and next steps')
+paragraph('<b>Built:</b> portable recorder role, persistent spool, real authenticated upload/ACK, receiver queue, restart handling, local ASR, registered tools, automatic extractive notes, lexical retrieval, contracts and logs. <b>Emulated:</b> microphone capture is replayed from a local recording. An optional Linux arecord adapter is supplied but not hardware-tested. <b>Simplified:</b> base.en replaces large-v3 and extractive importance scoring replaces the proposed local LLM. These stages execute; they are not mocked model responses.')
+paragraph('<b>Missing/fragile:</b> tested Pi hardware, continuous recorder service, robust power-loss recovery, diarization, semantic notes/search, per-device enrollment, enforced retention and production service hardening. ASR mistakes and cue-based importance selection are most fragile. Before real users, add encrypted storage/ACLs, authenticated TLS deployment, consent indicators, disk/queue alerts, job heartbeats, ASR timeouts, failure-rate and latency-percentile monitoring, and consented accuracy audits. Move device code to Pi and processor code to server without changing the manifest protocol. Retained transcripts support search and differ intentionally from Part 1 deletion plans.')
+heading('Security limits and run instructions')
+paragraph('Loopback HTTP is only for same-PC emulation; remote endpoints/listeners require HTTPS. Certificate loading and verification are implemented; actual remote TLS and Pi hardware deployment were not tested. The minimal HTTP server has no production traffic hardening. The shared token is not per-device authorization. Media, transcripts and notes are plaintext: local AI is not disk encryption or a security certification. Use public/synthetic inputs for this demo.',small=True)
+paragraph('<b>Run:</b> follow README setup, then python tools/run_distributed_demo.py. For manual use, run laptop.py serve in one terminal and device.py enqueue FILE followed by device.py send --token-file laptop-state/device.token in another. docs/TWO_ROLE_DEPLOYMENT.md explains later Pi/server placement. Code, synthetic media and authentic evidence accompany this four-page PDF.',small=True)
+paragraph('<b>Primary references:</b><br/>[1] Model sizes: https://github.com/openai/whisper<br/>[2] Checkpoint/precision: https://huggingface.co/Systran/faster-whisper-base.en<br/>[3] Media protocol restrictions: https://ffmpeg.org/ffmpeg-protocols.html',small=True)
 
 
-def decorate(canvas, document):
-    canvas.setStrokeColor(colors.HexColor("#d3e0e7"))
-    canvas.line(48, 43, 564, 43)
+def decorate(canvas,document):
+    canvas.setStrokeColor(colors.HexColor('#d3e0e7'))
+    canvas.line(48,43,564,43)
     canvas.setFillColor(NAVY)
-    canvas.setFont("ReportSans", 8)
-    canvas.drawString(48, 29, "SecureNote | First working prototype | ECE 6540")
-    canvas.drawRightString(564, 29, str(document.page))
+    canvas.setFont('ReportSans',8)
+    canvas.drawString(48,29,'SecureNote | Recorder + processor prototype | ECE 6540')
+    canvas.drawRightString(564,29,str(document.page))
 
 
-destination = ROOT / "docs/Project_Assignment_2.pdf"
-document = SimpleDocTemplate(str(destination), pagesize=(612, 792), leftMargin=48, rightMargin=48,
-                             topMargin=40, bottomMargin=57, title="SecureNote - Project Assignment 2",
-                             author="Michael Grajera")
-document.build(story, onFirstPage=decorate, onLaterPages=decorate)
-(ROOT / "docs/Project_Assignment_2.md").write_text("# SecureNote - Project Assignment 2\n\n" + "\n".join(markdown), encoding="utf-8")
+destination=ROOT/'docs/Project_Assignment_2.pdf'
+document=SimpleDocTemplate(str(destination),pagesize=(612,792),leftMargin=48,rightMargin=48,topMargin=40,bottomMargin=57,title='SecureNote - Recorder and Processor Prototype',author='Michael Grajera')
+document.build(story,onFirstPage=decorate,onLaterPages=decorate)
+(ROOT/'docs/Project_Assignment_2.md').write_text('# SecureNote - Project Assignment 2\n\n'+'\n'.join(markdown),encoding='utf-8')
 print(destination)

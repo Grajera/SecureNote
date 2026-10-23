@@ -1,1 +1,1 @@
-"""SecureNote: local recording-to-notes prototype, version 0.1.0."""
+"""SecureNote: recorder/processor prototype, version 0.2.0."""

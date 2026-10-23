@@ -1,5 +1,10 @@
 # SecureNote - first local prototype
 
+**This guide covers the standalone processing/diagnostic path.** The intended
+two-role recorder/receiver deployment is documented in README.md and
+TWO_ROLE_DEPLOYMENT.md. References below to no listener describe only this
+standalone CLI; `laptop.py serve` adds the authenticated receiver.
+
 Turns a local audio/video recording into a timestamped transcript, automatic
 candidate notes, and searchable passages. Includes a CLI and an optional desktop
 window. No OpenAI/Anthropic API, subscription, browser upload, or model server.

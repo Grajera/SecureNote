@@ -1,0 +1,25 @@
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.440104+00:00", "stage": "input", "event": "received", "input_bytes": 98238}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.440176+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.440214+00:00", "stage": "tool:inspect_media", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486376+00:00", "stage": "tool:inspect_media", "event": "result", "result_count": 1}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486556+00:00", "stage": "tool:inspect_media", "event": "completed", "latency_ms": 46.34}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486652+00:00", "stage": "validation", "event": "accepted", "input_bytes": 98238, "duration_seconds": 24.502857, "container": "mp3"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486685+00:00", "stage": "validation", "event": "completed", "latency_ms": 46.51}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486921+00:00", "stage": "preprocessing", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.486988+00:00", "stage": "tool:decode_audio", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.585376+00:00", "stage": "tool:decode_audio", "event": "result", "result_count": 1}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.585573+00:00", "stage": "tool:decode_audio", "event": "completed", "latency_ms": 98.58}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.585620+00:00", "stage": "preprocessing", "event": "completed", "latency_ms": 98.7}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:49.585654+00:00", "stage": "model_inference", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.235506+00:00", "stage": "model_inference", "event": "completed", "latency_ms": 1649.83}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236161+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236460+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 0.28}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236510+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236541+00:00", "stage": "tool:search_transcript", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236634+00:00", "stage": "tool:search_transcript", "event": "result", "result_count": 1}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236662+00:00", "stage": "tool:search_transcript", "event": "completed", "latency_ms": 0.12}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236686+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.18}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.236709+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.237129+00:00", "stage": "output", "event": "result", "files": ["notes.md", "notes.json", "transcript.txt", "transcript.json", "search.json"], "note_count": 6, "notes_sha256": "b03c569eb6525fdf06a1be9bd7ef3061130706c60348730f3c59e664ffdcecd2", "search_matches": 1}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.237163+00:00", "stage": "output", "event": "completed", "latency_ms": 0.45}
+{"run_id": "20261023T011349-0d8968d7", "timestamp": "2026-10-23T01:13:51.237189+00:00", "stage": "run", "event": "finished", "status": "ok", "latency_ms": 1797.16}

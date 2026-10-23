@@ -1,0 +1,217 @@
+{
+  "deployment": "two independent processes, recorder -> loopback HTTP -> processor",
+  "model_inference": "local CPU int8, no hosted API",
+  "runs": [
+    {
+      "label": "business",
+      "input": "business.wav",
+      "manifest": {
+        "schema_version": "1.0",
+        "recording_id": "0267963dfa3844cdb7f8566cdbe52edd",
+        "device_id": "pi-emulator-01",
+        "captured_at": "2026-10-23T01:13:47.582698+00:00",
+        "input_bytes": 826348,
+        "sha256": "16305685b6a6eaa27c346398e59fee0176e2b1ea3fe4d49c69e5681cf4e09580"
+      },
+      "job": {
+        "recording_id": "0267963dfa3844cdb7f8566cdbe52edd",
+        "status": "completed",
+        "pipeline_status": "ok",
+        "input_bytes": 826348,
+        "sha256": "16305685b6a6eaa27c346398e59fee0176e2b1ea3fe4d49c69e5681cf4e09580",
+        "result_directory": "20261023T011347-8197ac9f"
+      },
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T011347-8197ac9f",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": false,
+        "failure_injection": false,
+        "input_bytes": 826348,
+        "duration_seconds": 18.737052,
+        "container": "wav",
+        "decoded_audio": {
+          "duration_seconds": 18.7370625,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 6,
+        "transcript_characters": 266,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 6,
+          "notes_sha256": "4a49f7f226a30bf4c19898838ee2ca97dd3610f494812db70ec99febd17ae142",
+          "search_matches": 1
+        },
+        "latency_ms": 1647.99
+      },
+      "transfer_and_processing_ms": 1786.84
+    },
+    {
+      "label": "lecture",
+      "input": "lecture.mp3",
+      "manifest": {
+        "schema_version": "1.0",
+        "recording_id": "b71f62e65d7d48f8a3e22df7ea7038e2",
+        "device_id": "pi-emulator-01",
+        "captured_at": "2026-10-23T01:13:49.371104+00:00",
+        "input_bytes": 98238,
+        "sha256": "f46372b2b52e0db88169564e6528fd6687a2ddcdd1548f4b7a361f354174851f"
+      },
+      "job": {
+        "recording_id": "b71f62e65d7d48f8a3e22df7ea7038e2",
+        "status": "completed",
+        "pipeline_status": "ok",
+        "input_bytes": 98238,
+        "sha256": "f46372b2b52e0db88169564e6528fd6687a2ddcdd1548f4b7a361f354174851f",
+        "result_directory": "20261023T011349-0d8968d7"
+      },
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T011349-0d8968d7",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": false,
+        "failure_injection": false,
+        "input_bytes": 98238,
+        "duration_seconds": 24.502857,
+        "container": "mp3",
+        "decoded_audio": {
+          "duration_seconds": 24.4441875,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 4,
+        "transcript_characters": 327,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 6,
+          "notes_sha256": "b03c569eb6525fdf06a1be9bd7ef3061130706c60348730f3c59e664ffdcecd2",
+          "search_matches": 1
+        },
+        "latency_ms": 1797.16
+      },
+      "transfer_and_processing_ms": 1981.86
+    },
+    {
+      "label": "planning",
+      "input": "planning.mp4",
+      "manifest": {
+        "schema_version": "1.0",
+        "recording_id": "1de467a48ea6427990fcee9dfb5ae63a",
+        "device_id": "pi-emulator-01",
+        "captured_at": "2026-10-23T01:13:51.352948+00:00",
+        "input_bytes": 225989,
+        "sha256": "2d4f2853b095e63d7dc92f8b2f907250a620e59d381e83c4e418fdc7cbc2cbec"
+      },
+      "job": {
+        "recording_id": "1de467a48ea6427990fcee9dfb5ae63a",
+        "status": "completed",
+        "pipeline_status": "ok",
+        "input_bytes": 225989,
+        "sha256": "2d4f2853b095e63d7dc92f8b2f907250a620e59d381e83c4e418fdc7cbc2cbec",
+        "result_directory": "20261023T011351-7df5bb1e"
+      },
+      "summary": {
+        "schema_version": "1.0",
+        "run_id": "20261023T011351-7df5bb1e",
+        "status": "ok",
+        "runtime": {
+          "os": "Linux",
+          "machine": "x86_64",
+          "python": "3.12.14",
+          "cpu_count": 9
+        },
+        "model": {
+          "directory_name": "base.en",
+          "device": "cpu",
+          "compute_type": "int8",
+          "cpu_threads": 4
+        },
+        "content_logging": false,
+        "failure_injection": false,
+        "input_bytes": 225989,
+        "duration_seconds": 22.698005,
+        "container": "mov,mp4,m4a,3gp,3g2,mj2",
+        "decoded_audio": {
+          "duration_seconds": 22.709125,
+          "sample_rate_hz": 16000,
+          "channels": 1,
+          "sample_width_bytes": 2
+        },
+        "recognition": {
+          "language": "en",
+          "language_probability": 1
+        },
+        "segment_count": 7,
+        "transcript_characters": 330,
+        "output": {
+          "files": [
+            "notes.md",
+            "notes.json",
+            "transcript.txt",
+            "transcript.json",
+            "search.json"
+          ],
+          "note_count": 7,
+          "notes_sha256": "210aa2400d00962b9a52b5300d0c28d63674c5d144db596f6477914127f6087d",
+          "search_matches": 1
+        },
+        "latency_ms": 1454.7
+      },
+      "transfer_and_processing_ms": 1603.99
+    }
+  ],
+  "failure": {
+    "change": "one upload byte flipped, original manifest checksum retained",
+    "http_status": 400,
+    "published_job": false,
+    "device_status": "queued",
+    "recording_id": "d272687b922d4fc5bd87d9c681f23870"
+  }
+}

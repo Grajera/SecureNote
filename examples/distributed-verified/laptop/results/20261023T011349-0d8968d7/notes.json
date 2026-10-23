@@ -1,0 +1,48 @@
+{
+  "Questions": [
+    {
+      "id": 5,
+      "start": 13.04,
+      "end": 24.4,
+      "text": "How does exploration affect Thirding, the MMM will cover value iteration and policy iteration",
+      "importance_score": 1.2782
+    }
+  ],
+  "Key points": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 6.52,
+      "text": "Today's lecture covers reinforcement learning.",
+      "importance_score": 1.0
+    },
+    {
+      "id": 1,
+      "start": 0.0,
+      "end": 6.52,
+      "text": "A policy map sustained to an action.",
+      "importance_score": 1.1116
+    },
+    {
+      "id": 2,
+      "start": 0.0,
+      "end": 13.04,
+      "text": "A value function estimates expected future reward.",
+      "importance_score": 1.1932
+    },
+    {
+      "id": 3,
+      "start": 6.52,
+      "end": 19.48,
+      "text": "Remember, the discount factor controls how much future rewards matter.",
+      "importance_score": 4.1747
+    },
+    {
+      "id": 4,
+      "start": 13.04,
+      "end": 19.48,
+      "text": "The homework is due on Friday.",
+      "importance_score": 4.0
+    }
+  ]
+}

@@ -4,3 +4,7 @@ models/
 runs/
 inbox/
 *.pyc
+device-spool/
+laptop-state/
+demo-two-role/
+*.token

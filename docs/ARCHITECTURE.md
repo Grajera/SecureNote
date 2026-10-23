@@ -1,33 +1,42 @@
-# Implemented architecture and contracts
-
-Solid nodes are implemented in prototype v0.1. Dashed nodes are planned.
+# Implemented recorder/processor architecture, version 0.2
 
 ```mermaid
 flowchart TD
-    I["Input: local audio or video"] --> V["Validation: size, duration, audio track"]
-    V --> P["Tool call: decode_audio / FFmpeg"]
-    P --> M["Model inference: local Whisper base.en"]
-    M --> C["ASR contract: text and timestamps"]
-    C --> N["Postprocessing: importance and candidate notes"]
-    N --> R["Tool call: search_transcript / TF-IDF"]
-    R --> O["Output: transcript, notes, search results"]
-    V -.-> L["Logging: stage events, size, latency, output summary"]
-    P -.-> L
+    I["Device input: recording replay"] --> Q["Device spool: media and manifest"]
+    Q --> T["Transfer: token-authenticated upload"]
+    T --> V["Receiver: checksum validation, ACK, queue"]
+    V --> A["Media validation: inspect_media tool"]
+    A --> P["Preprocessing: decode_audio tool"]
+    P --> M["Local model inference: Whisper base.en"]
+    M --> N["Postprocessing: contracts and automatic notes"]
+    N --> R["Retrieval tool: search_transcript"]
+    R --> O["Output: searchable transcript and notes"]
+    Q -.-> L["Device, receiver and pipeline logs"]
+    V -.-> L
     M -.-> L
-    C -.-> L
-    N -.-> L
-    R -.-> L
     O -.-> L
-    D["Planned: dedicated Pi recorder and secure transfer"] -.-> I
-    C -.-> F["Planned: diarization and local LLM"]
+    D["Planned: tested Pi microphone hardware"] -.-> I
+    F["Planned: diarization and local LLM"] -.-> N
     style D stroke-dasharray: 5 5
     style F stroke-dasharray: 5 5
 ```
 
-Validation invokes a separate `inspect_media`/ffprobe tool. Tool names are
-resolved from a fixed Python registry. The controller selects calls; transcript
-content cannot select arbitrary executable commands. There is no agent loop
-or full RAG. TF-IDF retrieval operates only over the current recording.
+Device and processor are independent programs with separate directories. The
+same-PC demo uses loopback HTTP; cross-machine deployment requires HTTPS.
+The recorder has no ASR/LLM dependency. Detailed recorder/receiver contract,
+acknowledgment semantics, retry behavior and migration instructions are in
+TWO_ROLE_DEPLOYMENT.md. Capture is file replay; transport and processing run.
+
+## Device-to-receiver boundary
+
+Input is a raw media body and schema-1.0 manifest with recording/device IDs,
+ISO-8601 capture time, byte count and SHA-256. Required token, one Content-Length,
+2-GiB size cap, strict manifest shape and body hash are checked. A successful
+receipt contains ID/size/hash; only then does the device mark delivery. The
+receiver publishes a persistent job before acknowledgment. Bad requests return
+400/401 with no published job; missing acknowledgment leaves a retryable device
+copy. The same ID+manifest is idempotent. A later media/ASR failure is reported
+as a failed job, separately from delivery acknowledgment.
 
 ## Boundary 1: model inference -> postprocessing
 

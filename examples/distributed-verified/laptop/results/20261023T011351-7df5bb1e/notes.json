@@ -1,0 +1,59 @@
+{
+  "Decisions": [
+    {
+      "id": 1,
+      "start": 2.38,
+      "end": 6.74,
+      "text": "We agreed to keep the original recording on an encrypted drive.",
+      "importance_score": 1.0
+    }
+  ],
+  "Action items": [
+    {
+      "id": 2,
+      "start": 6.74,
+      "end": 11.02,
+      "text": "The device must record audio before sending it to the laptop.",
+      "importance_score": 1.0
+    },
+    {
+      "id": 3,
+      "start": 11.02,
+      "end": 14.34,
+      "text": "Bob will review the microphone settings tomorrow.",
+      "importance_score": 1.0
+    }
+  ],
+  "Questions": [
+    {
+      "id": 5,
+      "start": 17.46,
+      "end": 20.02,
+      "text": "Who will test the transfer cable?",
+      "importance_score": 1.0
+    }
+  ],
+  "Key points": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 2.38,
+      "text": "This is the recorder planning meeting.",
+      "importance_score": 1.0
+    },
+    {
+      "id": 4,
+      "start": 14.34,
+      "end": 17.46,
+      "text": "The important constraint is battery life.",
+      "importance_score": 4.0
+    },
+    {
+      "id": 6,
+      "start": 20.02,
+      "end": 22.82,
+      "text": "We have not decided on a wireless connection.",
+      "importance_score": 1.0
+    }
+  ]
+}

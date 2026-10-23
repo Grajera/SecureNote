@@ -1,0 +1,7 @@
+[00:00:00.00 - 00:00:02.38] This is the recorder planning meeting.
+[00:00:02.38 - 00:00:06.74] We agreed to keep the original recording on an encrypted drive.
+[00:00:06.74 - 00:00:11.02] The device must record audio before sending it to the laptop.
+[00:00:11.02 - 00:00:14.34] Bob will review the microphone settings tomorrow.
+[00:00:14.34 - 00:00:17.46] The important constraint is battery life.
+[00:00:17.46 - 00:00:20.02] Who will test the transfer cable?
+[00:00:20.02 - 00:00:22.82] We have not decided on a wireless connection.
