@@ -68,4 +68,31 @@ class RagTests(unittest.TestCase):
             self.assertNotIn('by Friday', logs)
             self.assertEqual(result['status'], 'answered')
 
+    def test_model_abstention_does_not_claim_recording_has_no_answer(self):
+        chunks = retrieve(SEGMENTS, 'budget', 'test')
+        answer, sources, status = postprocess_answer('not found', chunks)
+        self.assertEqual(status, 'needs_review')
+        self.assertIn('Could not answer', answer)
+        self.assertEqual(sources, [])
+
+    def test_retry_is_bounded_and_uses_strongest_evidence(self):
+        class Tokenizer:
+            def encode(self, text): return text.split()
+        for responses, expected in [(['not found', 'by Friday'], 'answered'),
+                                    (['not found', 'not found'], 'needs_review'),
+                                    (['not found', 'by Monday'], 'needs_review')]:
+            with self.subTest(responses=responses), tempfile.TemporaryDirectory() as temporary:
+                with patch('prototype.rag.load_answer_model', return_value=(Tokenizer(), object())), \
+                     patch('prototype.rag.generate_answer', side_effect=responses) as generate:
+                    directory, result, summary = answer_question(SEGMENTS, 5,
+                        'When is the budget due?', 'missing', temporary)
+                self.assertEqual(generate.call_count, 2)
+                self.assertIn(SEGMENTS[0]['text'], generate.call_args.args[0])
+                self.assertEqual(result['status'], expected)
+                self.assertEqual(summary['retry_count'], 1)
+                self.assertEqual(len(result['retrieved']), 1)
+                logs = (directory / 'run.jsonl').read_text()
+                self.assertNotIn('raw_answer', logs)
+                self.assertNotIn('by Friday', logs)
+
 if __name__ == '__main__': unittest.main()

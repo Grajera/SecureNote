@@ -24,7 +24,8 @@ MIN_SCORE = 0.20
 MAX_CHUNK_CHARS = 600
 MAX_PROMPT_TOKENS = 512
 MAX_NEW_TOKENS = 64
-NOT_FOUND = 'Not found in this recording.'
+NOT_FOUND = 'No relevant passages were found by this search. Try different wording.'
+UNANSWERED = 'Could not answer from the retrieved passages. Review the evidence below; it may contain the answer.'
 GENERATION_LOCK = threading.Lock()
 
 
@@ -144,7 +145,7 @@ def postprocess_answer(raw_answer, chunks):
     answer = ' '.join(raw_answer.split())
     normalized = normalize(answer)
     if normalized in ('not found', 'not found in this recording', 'unknown', 'unanswerable'):
-        return NOT_FOUND, [], 'not_found'
+        return UNANSWERED, [], 'needs_review'
     sources = [chunk for chunk in chunks if normalized and
         (' ' + normalized + ' ') in (' ' + normalize(chunk['text']) + ' ')]
     if not sources:
@@ -201,9 +202,27 @@ def answer_question(segments, duration, question, model_directory, output_root,
                     chunk_ids=[chunk['id'] for chunk in supplied])
             with log.stage('model_inference'):
                 raw_answer = generate_answer(prompt, tokenizer, model)
-                log.emit('model_inference', 'result', output_characters=len(raw_answer))
+                log.emit('model_inference', 'result', output_characters=len(raw_answer),
+                    **({'raw_answer': raw_answer} if log_content else {}))
             with log.stage('postprocessing'):
                 answer, sources, status = postprocess_answer(raw_answer, supplied)
+                log.emit('postprocessing', 'result', status=status, source_count=len(sources))
+            # One bounded retry reduces distraction from weaker matches. It is
+            # still checked against the exact passage supplied to the model.
+            # A lexical match is not a guarantee of relevance or completeness.
+            if status == 'needs_review':
+                with log.stage('model_retry'):
+                    strongest = [max(supplied, key=lambda chunk: chunk['score'])]
+                    retry_prompt = ('Answer the question by copying a short phrase from the context.\n'
+                        'Context: ' + strongest[0]['text'] + '\nQuestion: ' + question + '\nAnswer:')
+                    retry_raw = generate_answer(retry_prompt, tokenizer, model)
+                    answer, sources, status = postprocess_answer(retry_raw, strongest)
+                    summary['retry_count'] = 1
+                    log.emit('model_retry', 'result', status=status, output_characters=len(retry_raw),
+                        source_count=len(sources), **({'raw_answer': retry_raw} if log_content else {}))
+            else:
+                summary['retry_count'] = 0
+            with log.stage('answer_selection'):
                 result.update(answer=answer, sources=sources)
                 summary['status'] = status
         if not chunks:
