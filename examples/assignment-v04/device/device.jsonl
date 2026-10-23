@@ -1,0 +1,6 @@
+{"timestamp": "2026-10-23T02:52:31.254496+00:00", "stage": "capture_emulation", "event": "queued", "recording_id": "2c6e1281e30643dc8a672bf8e9168e7b", "input_bytes": 826348, "latency_ms": 8.6}
+{"timestamp": "2026-10-23T02:52:31.334389+00:00", "stage": "transfer", "event": "acknowledged", "recording_id": "2c6e1281e30643dc8a672bf8e9168e7b", "input_bytes": 826348, "latency_ms": 10.0}
+{"timestamp": "2026-10-23T02:52:33.197334+00:00", "stage": "capture_emulation", "event": "queued", "recording_id": "7cd282d3893048359581824e3eac3fdd", "input_bytes": 98238, "latency_ms": 3.21}
+{"timestamp": "2026-10-23T02:52:33.252197+00:00", "stage": "transfer", "event": "acknowledged", "recording_id": "7cd282d3893048359581824e3eac3fdd", "input_bytes": 98238, "latency_ms": 5.8}
+{"timestamp": "2026-10-23T02:52:34.957450+00:00", "stage": "capture_emulation", "event": "queued", "recording_id": "571cc6ab6e39441d8e939a3378fda1e1", "input_bytes": 225989, "latency_ms": 3.7}
+{"timestamp": "2026-10-23T02:52:35.017084+00:00", "stage": "transfer", "event": "acknowledged", "recording_id": "571cc6ab6e39441d8e939a3378fda1e1", "input_bytes": 225989, "latency_ms": 8.01}

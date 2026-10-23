@@ -37,7 +37,7 @@ truncated. Ranking is lexical, not semantic, and its threshold is not calibrated
 Input: decoded text (1-2000 characters), produced with at most 64 new tokens,
 and the exact supplied context chunks. Output: answer, status and sources.
 An exact normalized wording match yields answered; missing support yields
-needs_review; explicit abstention yields not_found. Invalid output fails. The
+needs_review; an explicit abstention also yields needs_review. Either outcome triggers one retry against the strongest supplied passage, with the same evidence check. Invalid output fails. The
 check can reject correct paraphrases and cannot prove semantic correctness.
 
 ## Security and deployment

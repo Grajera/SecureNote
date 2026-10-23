@@ -1,4 +1,4 @@
-# Optional Windows NVIDIA runtime; install into the SAME venv as SecureNote.
+# Optional NVIDIA CUDA 12 / cuDNN 9 runtime for Windows and Linux x86-64.
 nvidia-cudnn-cu12==9.3.0.75
 nvidia-cublas-cu12==12.4.5.8
 nvidia-cuda-runtime-cu12==12.4.127

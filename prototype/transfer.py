@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
-MAX_BYTES = 2 * 1024 ** 3
+MAX_BYTES = 2 * 1024**3
 
 
 def now():
@@ -41,20 +41,40 @@ def digest_file(path):
 
 
 def validate_manifest(manifest):
+    """Reject malformed metadata before any recording is accepted or queued."""
     if not isinstance(manifest, dict) or manifest.get("schema_version") != "1.0":
         raise ValueError("Unsupported recording manifest version")
-    if not isinstance(manifest.get("recording_id"), str) or not re.fullmatch(r"[a-f0-9]{32}", manifest["recording_id"]):
+    if not isinstance(manifest.get("recording_id"), str) or not re.fullmatch(
+        r"[a-f0-9]{32}", manifest["recording_id"]
+    ):
         raise ValueError("Invalid recording ID")
-    if not isinstance(manifest.get("device_id"), str) or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", manifest["device_id"]):
+    if not isinstance(manifest.get("device_id"), str) or not re.fullmatch(
+        r"[a-zA-Z0-9_-]{1,64}", manifest["device_id"]
+    ):
         raise ValueError("Invalid device ID")
-    if type(manifest.get("input_bytes")) is not int or not 0 < manifest["input_bytes"] <= MAX_BYTES:
+    if (
+        type(manifest.get("input_bytes")) is not int
+        or not 0 < manifest["input_bytes"] <= MAX_BYTES
+    ):
         raise ValueError("Invalid recording size")
-    if not isinstance(manifest.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", manifest["sha256"]):
+    if not isinstance(manifest.get("sha256"), str) or not re.fullmatch(
+        r"[a-f0-9]{64}", manifest["sha256"]
+    ):
         raise ValueError("Invalid checksum")
-    if not isinstance(manifest.get("captured_at"), str) or len(manifest["captured_at"]) > 64:
+    if (
+        not isinstance(manifest.get("captured_at"), str)
+        or len(manifest["captured_at"]) > 64
+    ):
         raise ValueError("Invalid capture timestamp")
     datetime.fromisoformat(manifest["captured_at"])
-    if set(manifest) != {"schema_version", "recording_id", "device_id", "input_bytes", "sha256", "captured_at"}:
+    if set(manifest) != {
+        "schema_version",
+        "recording_id",
+        "device_id",
+        "input_bytes",
+        "sha256",
+        "captured_at",
+    }:
         raise ValueError("Unexpected manifest fields")
     return manifest
 
@@ -69,12 +89,22 @@ def loopback(host):
 
 
 def validate_endpoint(endpoint):
+    """Allow plaintext only for same-machine emulation, never a remote recorder."""
     parsed = urlsplit(endpoint)
-    if (parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username
-            or parsed.password or parsed.path not in ("", "/") or parsed.query or parsed.fragment):
+    if (
+        parsed.scheme not in ("http", "https")
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+    ):
         raise ValueError("Use a server origin such as https://laptop.example:8765")
     if parsed.scheme == "http" and not loopback(parsed.hostname):
-        raise ValueError("HTTP is permitted only for same-computer loopback emulation; use HTTPS across machines")
+        raise ValueError(
+            "HTTP is permitted only for same-computer loopback emulation; use HTTPS across machines"
+        )
     return parsed
 
 

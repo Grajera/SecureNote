@@ -8,3 +8,9 @@ device-spool/
 laptop-state/
 demo-two-role/
 *.token
+
+local-settings.json
+
+tmp/
+
+demo-assignment-*/

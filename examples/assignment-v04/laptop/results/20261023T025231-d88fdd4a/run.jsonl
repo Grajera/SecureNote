@@ -1,0 +1,25 @@
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.336008+00:00", "stage": "input", "event": "received", "input_bytes": 826348}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.336095+00:00", "stage": "validation", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.336137+00:00", "stage": "tool:inspect_media", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.395809+00:00", "stage": "tool:inspect_media", "event": "result", "result_count": 1}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.396081+00:00", "stage": "tool:inspect_media", "event": "completed", "latency_ms": 59.94}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.396194+00:00", "stage": "validation", "event": "accepted", "input_bytes": 826348, "duration_seconds": 18.737052, "source_duration_known": true, "container": "wav"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.396229+00:00", "stage": "validation", "event": "completed", "latency_ms": 60.13}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.396482+00:00", "stage": "preprocessing", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.396530+00:00", "stage": "tool:decode_audio", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.460218+00:00", "stage": "tool:decode_audio", "event": "result", "result_count": 1}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.460339+00:00", "stage": "tool:decode_audio", "event": "completed", "latency_ms": 63.8}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.460379+00:00", "stage": "preprocessing", "event": "completed", "latency_ms": 63.9}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:31.460411+00:00", "stage": "model_inference", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.088849+00:00", "stage": "model_inference", "event": "completed", "latency_ms": 1628.43}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.089334+00:00", "stage": "postprocessing", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090636+00:00", "stage": "postprocessing", "event": "completed", "latency_ms": 1.3}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090717+00:00", "stage": "retrieval", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090753+00:00", "stage": "tool:search_transcript", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090874+00:00", "stage": "tool:search_transcript", "event": "result", "result_count": 1}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090911+00:00", "stage": "tool:search_transcript", "event": "completed", "latency_ms": 0.16}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090938+00:00", "stage": "retrieval", "event": "completed", "latency_ms": 0.22}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.090963+00:00", "stage": "output", "event": "started"}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.091463+00:00", "stage": "output", "event": "result", "files": ["notes.md", "notes.json", "transcript.txt", "transcript.json", "search.json"], "note_count": 5, "notes_sha256": "85db503162408905e0be9b0a4b83270c0c03221448532ab2fd1779298ae9cec0", "search_matches": 1}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.091499+00:00", "stage": "output", "event": "completed", "latency_ms": 0.53}
+{"run_id": "20261023T025231-d88fdd4a", "timestamp": "2026-10-23T02:52:33.091528+00:00", "stage": "run", "event": "finished", "status": "ok", "latency_ms": 1755.9}

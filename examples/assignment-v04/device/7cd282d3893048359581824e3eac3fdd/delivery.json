@@ -1,0 +1,11 @@
+{
+  "status": "delivered",
+  "attempts": 1,
+  "receipt": {
+    "recording_id": "7cd282d3893048359581824e3eac3fdd",
+    "input_bytes": 98238,
+    "sha256": "f46372b2b52e0db88169564e6528fd6687a2ddcdd1548f4b7a361f354174851f",
+    "status": "accepted"
+  },
+  "acknowledged_at": "2026-10-23T02:52:33.251337+00:00"
+}

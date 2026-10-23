@@ -7,7 +7,13 @@ import threading
 import shutil
 from pathlib import Path
 
-from .analysis import automatic_notes, safe_markdown, sentence_passages, timestamp, validate_segments
+from .analysis import (
+    automatic_notes,
+    safe_markdown,
+    sentence_passages,
+    timestamp,
+    validate_segments,
+)
 from .pipeline import execute_media_tool, inspect_media
 from .transfer import atomic_json
 
@@ -41,7 +47,9 @@ def parse_range(header, size):
 class ReviewStore:
     def __init__(self, state, roots):
         self.state = Path(state).absolute()
-        self.roots = list(dict.fromkeys([self.state, *(Path(root).absolute() for root in roots)]))
+        self.roots = list(
+            dict.fromkeys([self.state, *(Path(root).absolute() for root in roots)])
+        )
         self.lock = threading.RLock()
         self.previews = {}
         self.durations = {}
@@ -62,7 +70,14 @@ class ReviewStore:
         path = self.state / "reviews" / (identifier + ".json")
         if path.is_file():
             return json.loads(path.read_text(encoding="utf-8"))
-        return {"version": 0, "title": "", "reviewed": False, "edits": {}, "hidden": [], "bookmarks": []}
+        return {
+            "version": 0,
+            "title": "",
+            "reviewed": False,
+            "edits": {},
+            "hidden": [],
+            "bookmarks": [],
+        }
 
     def suggested_title(self, root, job):
         key = (job["recording_id"], job.get("result_directory"))
@@ -72,7 +87,9 @@ class ReviewStore:
         if re.fullmatch(r"\d{8}T\d{6}-[a-f0-9]{8}", name):
             path = root / "results" / name / "transcript.json"
             if path.is_file():
-                segments = json.loads(path.read_text(encoding="utf-8")).get("segments", [])
+                segments = json.loads(path.read_text(encoding="utf-8")).get(
+                    "segments", []
+                )
                 if segments:
                     text = str(segments[0].get("text", "")).strip()
                     title = text[:80] + ("…" if len(text) > 80 else "")
@@ -91,22 +108,43 @@ class ReviewStore:
                     annotation = self.annotation(identifier)
                     if bool(annotation.get("trashed", False)) != trashed:
                         continue
-                    recordings.setdefault(identifier, {"id": identifier, "title": annotation["title"] or self.suggested_title(root, job),
-                        "status": job["status"], "reviewed": annotation["reviewed"],
-                        "created_at": job.get("captured_at", ""), "input_bytes": job["input_bytes"],
-                        "device": job.get("device_id", "Recorder")})
+                    recordings.setdefault(
+                        identifier,
+                        {
+                            "id": identifier,
+                            "title": annotation["title"]
+                            or self.suggested_title(root, job),
+                            "status": job["status"],
+                            "reviewed": annotation["reviewed"],
+                            "created_at": job.get("captured_at", ""),
+                            "input_bytes": job["input_bytes"],
+                            "device": job.get("device_id", "Recorder"),
+                        },
+                    )
                 except (OSError, ValueError, KeyError, TypeError):
                     continue  # An unrelated/broken job never hides the rest of the library.
-        return sorted(recordings.values(), key=lambda recording: recording["created_at"], reverse=True)
+        return sorted(
+            recordings.values(),
+            key=lambda recording: recording["created_at"],
+            reverse=True,
+        )
 
     def detail(self, identifier):
         root, job = self.locate(identifier)
         annotation = self.annotation(identifier)
-        result = {"id": identifier, "title": annotation["title"] or self.suggested_title(root, job),
-                  "status": job["status"], "device": job.get("device_id", "Recorder"),
-                  "created_at": job.get("captured_at"), "annotation": annotation,
-                  "segments": [], "notes": [], "duration": self.durations.get(identifier, 0), "error": None,
-                  "preview": self.preview_status(identifier)}
+        result = {
+            "id": identifier,
+            "title": annotation["title"] or self.suggested_title(root, job),
+            "status": job["status"],
+            "device": job.get("device_id", "Recorder"),
+            "created_at": job.get("captured_at"),
+            "annotation": annotation,
+            "segments": [],
+            "notes": [],
+            "duration": self.durations.get(identifier, 0),
+            "error": None,
+            "preview": self.preview_status(identifier),
+        }
         directory_name = job.get("result_directory", "")
         # A result directory name is an internal ID, never a client-supplied path.
         if not re.fullmatch(r"\d{8}T\d{6}-[a-f0-9]{8}", directory_name):
@@ -117,7 +155,9 @@ class ReviewStore:
         result["duration"] = summary.get("decoded_audio", {}).get("duration_seconds", 0)
         if not (directory / "transcript.json").is_file():
             return result
-        transcript = json.loads((directory / "transcript.json").read_text(encoding="utf-8"))
+        transcript = json.loads(
+            (directory / "transcript.json").read_text(encoding="utf-8")
+        )
         segments = validate_segments(transcript["segments"], result["duration"])
         result["segments"] = segments
         # Re-derive current selection from evidence: upgrading old runs needs no ASR.
@@ -125,40 +165,81 @@ class ReviewStore:
         for category, passages in sections.items():
             for passage in passages:
                 note_id = str(passage["id"])
-                result["notes"].append({**passage, "id": note_id, "category": category,
-                    "text": annotation["edits"].get(note_id, passage["text"]),
-                    "source_text": passage["text"], "edited": note_id in annotation["edits"],
-                    "hidden": note_id in annotation["hidden"]})
+                result["notes"].append(
+                    {
+                        **passage,
+                        "id": note_id,
+                        "category": category,
+                        "text": annotation["edits"].get(note_id, passage["text"]),
+                        "source_text": passage["text"],
+                        "edited": note_id in annotation["edits"],
+                        "hidden": note_id in annotation["hidden"],
+                    }
+                )
         return result
 
     def save_annotation(self, identifier, changes):
         with self.lock:
             self.locate(identifier)
             annotation = self.annotation(identifier)
-            if not isinstance(changes, dict) or set(changes) - {"version", "title", "reviewed", "edits", "hidden", "bookmarks"}:
+            if not isinstance(changes, dict) or set(changes) - {
+                "version",
+                "title",
+                "reviewed",
+                "edits",
+                "hidden",
+                "bookmarks",
+            }:
                 raise ValueError("Invalid review update")
-            if type(changes.get("version")) is not int or changes["version"] != annotation["version"]:
-                raise RuntimeError("This review changed in another tab. Reload before saving.")
+            if (
+                type(changes.get("version")) is not int
+                or changes["version"] != annotation["version"]
+            ):
+                raise RuntimeError(
+                    "This review changed in another tab. Reload before saving."
+                )
             updated = {**annotation, **changes, "version": annotation["version"] + 1}
-            if not isinstance(updated["title"], str) or len(updated["title"]) > 200 or type(updated["reviewed"]) is not bool:
+            if (
+                not isinstance(updated["title"], str)
+                or len(updated["title"]) > 200
+                or type(updated["reviewed"]) is not bool
+            ):
                 raise ValueError("Invalid recording title or review state")
             detail = self.detail(identifier)
             note_ids = {note["id"] for note in detail["notes"]}
-            if not isinstance(updated["edits"], dict) or any(key not in note_ids or not isinstance(value, str)
-                or not 1 <= len(value.strip()) <= 5000 for key, value in updated["edits"].items()):
+            if not isinstance(updated["edits"], dict) or any(
+                key not in note_ids
+                or not isinstance(value, str)
+                or not 1 <= len(value.strip()) <= 5000
+                for key, value in updated["edits"].items()
+            ):
                 raise ValueError("Invalid note edit")
-            if not isinstance(updated["hidden"], list) or any(value not in note_ids for value in updated["hidden"]):
+            if not isinstance(updated["hidden"], list) or any(
+                value not in note_ids for value in updated["hidden"]
+            ):
                 raise ValueError("Invalid hidden note")
-            if not isinstance(updated["bookmarks"], list) or len(updated["bookmarks"]) > 1000:
+            if (
+                not isinstance(updated["bookmarks"], list)
+                or len(updated["bookmarks"]) > 1000
+            ):
                 raise ValueError("Invalid bookmarks")
             seen = set()
             for bookmark in updated["bookmarks"]:
-                if not isinstance(bookmark, dict) or set(bookmark) != {"id", "start", "text"}:
+                if not isinstance(bookmark, dict) or set(bookmark) != {
+                    "id",
+                    "start",
+                    "text",
+                }:
                     raise ValueError("Invalid bookmark")
                 validate_identifier(bookmark["id"])
-                if (bookmark["id"] in seen or type(bookmark["start"]) not in (float, int)
-                    or not math.isfinite(bookmark["start"]) or not 0 <= bookmark["start"] <= max(detail["duration"], 0)
-                    or not isinstance(bookmark["text"], str) or not 1 <= len(bookmark["text"].strip()) <= 1000):
+                if (
+                    bookmark["id"] in seen
+                    or type(bookmark["start"]) not in (float, int)
+                    or not math.isfinite(bookmark["start"])
+                    or not 0 <= bookmark["start"] <= max(detail["duration"], 0)
+                    or not isinstance(bookmark["text"], str)
+                    or not 1 <= len(bookmark["text"].strip()) <= 1000
+                ):
                     raise ValueError("Invalid bookmark content")
                 seen.add(bookmark["id"])
             atomic_json(self.state / "reviews" / (identifier + ".json"), updated)
@@ -168,7 +249,9 @@ class ReviewStore:
         with self.lock:
             _, job = self.locate(identifier)
             if job["status"] in ("queued", "processing"):
-                raise RuntimeError("Wait for processing to finish before deleting this recording.")
+                raise RuntimeError(
+                    "Wait for processing to finish before deleting this recording."
+                )
             annotation = self.annotation(identifier)
             annotation.update(trashed=not restore, version=annotation["version"] + 1)
             atomic_json(self.state / "reviews" / (identifier + ".json"), annotation)
@@ -179,16 +262,33 @@ class ReviewStore:
             root, job = self.locate(identifier)
             if not self.annotation(identifier).get("trashed"):
                 raise ValueError("Move this recording to Trash first")
-            if job["status"] in ("queued", "processing") or self.preview_status(identifier) == "preparing":
-                raise RuntimeError("Wait for processing and audio preparation to finish")
+            if (
+                job["status"] in ("queued", "processing")
+                or self.preview_status(identifier) == "preparing"
+            ):
+                raise RuntimeError(
+                    "Wait for processing and audio preparation to finish"
+                )
             # Only managed paths derived from validated identifiers; never the imported original.
             name = job.get("result_directory", "")
             if re.fullmatch(r"\d{8}T\d{6}-[a-f0-9]{8}", name):
-                others = [p for p in (root / "inbox").glob("*/job.json") if p.parent.name != identifier]
-                if not any(json.loads(p.read_text(encoding="utf-8")).get("result_directory") == name for p in others):
+                others = [
+                    p
+                    for p in (root / "inbox").glob("*/job.json")
+                    if p.parent.name != identifier
+                ]
+                if not any(
+                    json.loads(p.read_text(encoding="utf-8")).get("result_directory")
+                    == name
+                    for p in others
+                ):
                     if (root / "results" / name).exists():
                         shutil.rmtree(root / "results" / name)
-            for folder in (root / "inbox" / identifier, self.state / "review-device" / identifier, self.state / "answers" / identifier):
+            for folder in (
+                root / "inbox" / identifier,
+                self.state / "review-device" / identifier,
+                self.state / "answers" / identifier,
+            ):
                 if folder.exists():
                     shutil.rmtree(folder)
             self.preview_path(identifier).unlink(missing_ok=True)
@@ -207,12 +307,21 @@ class ReviewStore:
             try:
                 detail = self.detail(recording["id"])
                 sources = [("Your note", n) for n in detail["annotation"]["bookmarks"]]
-                sources += [(n["category"], n) for n in detail["notes"] if not n["hidden"]]
+                sources += [
+                    (n["category"], n) for n in detail["notes"] if not n["hidden"]
+                ]
                 sources += [("Transcript", n) for n in detail["segments"]]
                 for kind, note in sources:
                     if all(word in note["text"].casefold() for word in words):
-                        matches.append({"id": recording["id"], "title": recording["title"],
-                            "kind": kind, "text": note["text"], "start": note["start"]})
+                        matches.append(
+                            {
+                                "id": recording["id"],
+                                "title": recording["title"],
+                                "kind": kind,
+                                "text": note["text"],
+                                "start": note["start"],
+                            }
+                        )
             except (OSError, ValueError, KeyError):
                 continue
         return sorted(matches, key=lambda n: n["kind"] == "Transcript")[:100]
@@ -232,16 +341,62 @@ class ReviewStore:
             if self.preview_status(identifier) in ("ready", "preparing"):
                 return self.preview_status(identifier)
             self.previews[identifier] = "preparing"
+
         def convert():
             temporary = self.preview_path(identifier).with_suffix(".pending.mp3")
             try:
-                self.durations[identifier] = inspect_media(root / "inbox" / identifier / "recording.media")["duration_seconds"]
-                execute_media_tool(["ffmpeg", "-nostdin", "-v", "error", "-y", "-protocol_whitelist", "file",
-                    "-i", str(root / "inbox" / identifier / "recording.media"), "-map", "0:a:0",
-                    "-vn", "-sn", "-dn", "-t", "7201", "-ac", "1", "-ar", "44100",
-                    "-c:a", "libmp3lame", "-b:a", "128k", "-map_metadata", "-1", str(temporary)], timeout=1800)
-                metadata = json.loads(execute_media_tool(["ffprobe", "-v", "error", "-protocol_whitelist", "file",
-                    "-show_entries", "format=duration", "-of", "json", str(temporary)], timeout=30))
+                self.durations[identifier] = inspect_media(
+                    root / "inbox" / identifier / "recording.media"
+                )["duration_seconds"]
+                execute_media_tool(
+                    [
+                        "ffmpeg",
+                        "-nostdin",
+                        "-v",
+                        "error",
+                        "-y",
+                        "-protocol_whitelist",
+                        "file",
+                        "-i",
+                        str(root / "inbox" / identifier / "recording.media"),
+                        "-map",
+                        "0:a:0",
+                        "-vn",
+                        "-sn",
+                        "-dn",
+                        "-t",
+                        "7201",
+                        "-ac",
+                        "1",
+                        "-ar",
+                        "44100",
+                        "-c:a",
+                        "libmp3lame",
+                        "-b:a",
+                        "128k",
+                        "-map_metadata",
+                        "-1",
+                        str(temporary),
+                    ],
+                    timeout=1800,
+                )
+                metadata = json.loads(
+                    execute_media_tool(
+                        [
+                            "ffprobe",
+                            "-v",
+                            "error",
+                            "-protocol_whitelist",
+                            "file",
+                            "-show_entries",
+                            "format=duration",
+                            "-of",
+                            "json",
+                            str(temporary),
+                        ],
+                        timeout=30,
+                    )
+                )
                 preview_duration = float(metadata["format"]["duration"])
                 if not math.isfinite(preview_duration) or preview_duration > 7200.1:
                     raise ValueError("Playback exceeds the recording duration limit")
@@ -253,22 +408,50 @@ class ReviewStore:
                 self.previews[identifier] = "failed"
             finally:
                 temporary.unlink(missing_ok=True)
+
         threading.Thread(target=convert, name="playback-preview", daemon=True).start()
         return "preparing"
 
     def export(self, identifier, transcript_only=False):
         detail = self.detail(identifier)
         if transcript_only:
-            return "\n".join(f"[{timestamp(segment['start'])}] {segment['text']}" for segment in detail["segments"])
-        lines = ["# " + safe_markdown(detail["title"]), "", "Reviewed: " + str(detail["annotation"]["reviewed"]), ""]
+            return "\n".join(
+                f"[{timestamp(segment['start'])}] {segment['text']}"
+                for segment in detail["segments"]
+            )
+        lines = [
+            "# " + safe_markdown(detail["title"]),
+            "",
+            "Reviewed: " + str(detail["annotation"]["reviewed"]),
+            "",
+        ]
         for category in ("Decisions", "Action items", "Key points", "Follow-ups"):
-            notes = [note for note in detail["notes"] if note["category"] == category and not note["hidden"]]
+            notes = [
+                note
+                for note in detail["notes"]
+                if note["category"] == category and not note["hidden"]
+            ]
             if notes:
                 lines += ["## " + category, ""]
-                lines += [f"- [{timestamp(note['start'])}] {safe_markdown(note['text'])}" + (" (edited)" if note["edited"] else "") for note in notes]
+                lines += [
+                    f"- [{timestamp(note['start'])}] {safe_markdown(note['text'])}"
+                    + (" (edited)" if note["edited"] else "")
+                    for note in notes
+                ]
                 lines.append("")
         if detail["annotation"]["bookmarks"]:
             lines += ["## Personal bookmarks", ""]
-            lines += [f"- [{timestamp(bookmark['start'])}] {safe_markdown(bookmark['text'])}" for bookmark in detail["annotation"]["bookmarks"]]
-        lines += ["", "## Full transcript", "", "\n".join(safe_markdown(line) for line in self.export(identifier, True).splitlines())]
+            lines += [
+                f"- [{timestamp(bookmark['start'])}] {safe_markdown(bookmark['text'])}"
+                for bookmark in detail["annotation"]["bookmarks"]
+            ]
+        lines += [
+            "",
+            "## Full transcript",
+            "",
+            "\n".join(
+                safe_markdown(line)
+                for line in self.export(identifier, True).splitlines()
+            ),
+        ]
         return "\n".join(lines)

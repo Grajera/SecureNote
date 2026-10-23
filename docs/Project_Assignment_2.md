@@ -27,7 +27,7 @@ flowchart TD
 
 The recorder queues a local copy and sends it to a separate receiver process. The receiver checks the token, byte count and SHA-256 before acknowledging storage. Media must be nonempty, at most 2 GiB, and contain decodable audio of no more than two hours. FFprobe inspects the file and FFmpeg converts it to mono PCM. Whisper produces timestamped text; postprocessing checks the segment format and groups selected sentences into notes.
 
-The required additional component is RAG. A question retrieves up to three transcript chunks. Those chunks become context in the prompt sent to FLAN-T5-small, which generates a short answer locally. The application attaches matching source timestamps and lets the user listen or save the answer. If retrieval returns nothing, it reports "Not found in this recording" and skips generation. Ordinary FFmpeg calls are not being counted as AI tool calls.
+The required additional component is RAG. A question retrieves up to three transcript chunks. Those chunks become context in the prompt sent to FLAN-T5-small, which generates a short answer locally. The application attaches matching source timestamps and lets the user listen or save the answer. Empty retrieval skips generation and reports that the search found no relevant passages. An abstention or unsupported answer triggers one retry on the strongest passage; another failure asks the user to review the evidence. RAG fits transcript questions without model-directed tools or an autonomous agent loop.
 
 The browser also provides the full transcript, editable notes, search, export and deletion. Each pipeline logs input size, stages, latency and output metadata. Content stays out of default logs; transcript and answer files are stored separately. The synthetic demonstration enables answer text in its logs so the results can be inspected.
 
@@ -83,7 +83,7 @@ Transcription produced 7 segments and 6 notes. Recording pipeline: 1.084 s. RAG 
 {"stage":"output","event":"result","answer":"encrypted drive"}
 ```
 
-These log excerpts retain selected fields from real records. The first RAG request includes 2.407 seconds of model loading; later requests reuse the loaded model. Full inputs, transcripts, notes, answers and stage logs are in examples/assignment-v05/. The short clips demonstrate the pipeline, not expected speed or accuracy for a full meeting.
+These are original v0.5 measurements; the patched code reproduced all three answers. Log excerpts retain selected fields from real records. The first RAG request includes 2.407 seconds of model loading; later requests reuse the loaded model. Full inputs, transcripts, notes, answers and stage logs are in examples/assignment-v05/. The short clips demonstrate the pipeline, not expected speed or accuracy for a full meeting.
 
 One limitation remains visible in the lecture transcript: Whisper wrote "A policy map sustained to an action." Retrieval and generation cannot repair incorrect source material reliably, so the recording remains available for review.
 
@@ -105,7 +105,7 @@ Invalid or missing data: reject malformed fields, duplicate IDs, empty text, non
 
 Boundary B: answer generator to postprocessing. Input is the decoded model response as a string, along with the exact chunks supplied in the prompt. Decoding is limited to 64 new tokens. Output is {answer: str, status: str, sources: list}, with source records carrying their original text, recording ID, timestamps and retrieval score.
 
-Invalid or missing data: empty, non-string, oversized or token-limit responses fail validation. Postprocessing normalizes spacing and checks whether the answer wording occurs in a supplied chunk. A match produces answered status and source links; an unmatched response becomes needs_review. An explicit model abstention becomes not_found. This conservative check can reject a valid paraphrase and cannot establish factual correctness; source links are assigned by code, not invented by the model.
+Invalid or missing data: empty, non-string, oversized or token-limit responses fail validation. Postprocessing normalizes spacing and checks whether the answer wording occurs in a supplied chunk. A match produces answered status and source links; an unmatched response becomes needs_review. An abstention also becomes needs_review. Either outcome triggers one retry with a simpler prompt and the highest-scoring supplied chunk; the same check runs again. A failed retry retains needs_review and the passages. Lexical matching can reject valid paraphrases and accept incomplete answers; it does not verify meaning. Source links are assigned by code.
 
 ## 4. Models, precision and assumptions
 
@@ -121,40 +121,39 @@ Model documentation: huggingface.co/google/flan-t5-small; github.com/SYSTRAN/fas
 
 # Failure test and remaining work
 
-## 5. Failure test: missing retrieval evidence
+## 5. Failure test and observed answer failure
 
-For the business-meeting question, the normal retriever finds "Alice will send the revised budget by Friday." The failure test deliberately replaces that result with an empty list before prompt building. The recording and question are unchanged, so the answer exists in the transcript but is unavailable to the generator.
-
-The system did not crash or quietly answer from model memory. It returned "Not found in this recording," with no sources, in 0.62 ms. The prompt-building and model-inference stages were explicitly skipped. The test therefore checks the retriever-to-prompt boundary: it accepts an empty list as a valid no-evidence result and prevents an unsupported generation call.
+Deliberate failure. I replaced the business-question retrieval result with an empty list before prompt building, leaving the question and transcript unchanged. The answer was present in the transcript but unavailable to the generator. The patched run returned "No relevant passages were found by this search. Try different wording." It finished in 1.17 ms without crashing or generating an unsupported answer.
 
 ```text
 {"stage":"retrieval","event":"result","chunk_count":0}
 {"stage":"model_inference","event":"skipped","reason":"no_evidence"}
 {"stage":"run","event":"finished","status":"not_found",
- "latency_ms":0.62}
+ "latency_ms":1.17}
 ```
 
-Nothing passed through to generation in this test. The remaining weakness is that "not found" can mean retrieval missed an answer that is present. I would add labeled retrieval tests, track empty-result rates and assess a semantic retriever before changing the threshold. The message should remain cautious: it is not proof that the meeting never discussed the subject. A separate corrupted-upload test also remains in the demo.
+The retriever-to-prompt boundary accepts an empty list, but the guard prevents it from reaching inference. This catches missing evidence, not a retrieval miss. I would add labeled questions with known source passages and track retrieval misses separately from model failures.
+
+Observed failure with evidence present. The question "when was the wild west of AI?" retrieved a passage at 18:30 containing "late 2024, early 2025," yet the model answered "not found." A local reproduction using that excerpt and the retrieved "AI person" distractor confirmed the false negative. The generator-to-postprocessing boundary had accepted the abstention as evidence of absence.
+
+The patch retries once using the strongest passage and a simpler prompt. The reproduced answer changed to "late 2024," with the correct source, but still omitted "early 2025." Failed answers now request evidence review rather than claim absence. This is a partial fix: a literal text match does not check completeness. A stronger local model, better context retrieval and tests of complete answers remain future work.
 
 ## 6. Comparison with Assignment 1 and next steps
 
-The original local speech-to-notes idea is working, with validation, timestamped output, logging and human review. The prototype also implements a recorder queue and acknowledged transfer, playback, editable notes, deletion, and local RAG answers. Audio/video support expanded beyond MP3/WAV, with a 2-GiB size cap and the same two-hour duration limit.
+Built: local transcription, candidate notes, logging, recorder queue and acknowledged transfer, playback, editable notes, deletion and RAG answers. The Pi role is emulated with files; physical capture is untested. Base.en replaces large-v3, and sentence scoring supplies notes. FLAN-T5 answers questions; the proposed full-meeting Qwen summarizer, diarization, inferred owners, automatic fallback and cache expiry are not built. Audio is retained for review rather than automatically deleted.
 
-The Pi is still emulated with recording files; its microphone adapter is not hardware-tested. Base.en replaces the proposed large-v3 model. Sentence scoring produces automatic notes, while FLAN-T5 answers retrieved-context questions; it does not replace the proposed full-meeting Qwen summarizer. Diarization, inferred owners, semantic topic summaries, automatic model fallback, cache expiration and production deployment are missing. Audio and transcripts are retained for review instead of the original automatic-deletion policy.
-
-The fragile parts are transcription quality, word-based retrieval and the small answer model. Before real users depend on it, I would monitor queue age, stalled jobs, latency percentiles, errors, disk usage, empty retrievals and needs_review results. Human spot checks are needed for accuracy. Next steps include tested Pi capture, per-device credentials, encrypted storage, retention rules and a process supervisor for hard timeouts and recovery.
+Answer quality is the most fragile part: keyword retrieval misses meaning, and the small generator can refuse or omit information even with the right evidence. Before real use, I would monitor queue age, failed jobs, latency, disk usage, empty searches, retries and needs_review rates, with human checks for answer accuracy. Next steps are a labeled question set, improved local answering, tested Pi capture, per-device credentials, encrypted storage, retention rules and hard timeout recovery.
 
 ## Running it and protecting the recordings
 
-The README provides Windows installation commands for both models. Install FFmpeg/ffprobe, base requirements, CPU PyTorch and requirements-rag.txt first. Then run:
+Apply SecureNote_RAG_Fix.zip to the v0.5 code before running this revision. The README covers FFmpeg, base dependencies, CPU PyTorch and requirements-rag.txt. Download both models once, then start the review workspace:
 
 ```text
 python securenote.py download-model --model base.en
 python ask.py download-model
 python review.py
-python tools/run_assignment_demo.py --output demo-assignment-new
 ```
 
-All inference uses local files. The browser requires a private session and checks mutation requests; remote recorder transfer requires verified HTTPS. Local files are plaintext unless the volume is encrypted. Trash retains recordings until permanent deletion, which also removes this workspace's saved answers but not independent copies or backups.
+Inference stays local. The browser checks its private session and mutation requests; remote recorder transfer requires verified HTTPS. Stored files need volume encryption for protection at rest. Trash retains recordings until permanent deletion; independent copies and backups remain. The code is a prototype, not a validated deployment for confidential meetings.
 
-Validation: 35 tests passed, plus browser checks of local RAG, evidence playback, saved notes and missing evidence. Submit this PDF with SecureNote_Prototype.zip, which includes the matching report, code, README, synthetic recordings and logs.
+Validation: 37 unit tests passed after the patch. All three original answers were reproduced with local inference; the Wild West test used supplied excerpts, not the full recording. Earlier browser tests covered playback and notes. Submit this report with the v0.5 code plus the RAG patch, or a code folder with that patch applied.

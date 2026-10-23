@@ -22,7 +22,11 @@ class TransferTests(unittest.TestCase):
         self.source.write_bytes(b"synthetic recording bytes for transport test")
         self.processor = Processor(self.root / "laptop", self.root / "unused-model")
         self.server = Receiver(("127.0.0.1", 0), self.processor)
-        self.thread = threading.Thread(target=self.server.serve_forever, kwargs={"poll_interval": .02}, daemon=True)
+        self.thread = threading.Thread(
+            target=self.server.serve_forever,
+            kwargs={"poll_interval": 0.02},
+            daemon=True,
+        )
         self.thread.start()
         self.endpoint = f"http://127.0.0.1:{self.server.server_port}"
         self.token = self.processor.state / "device.token"
@@ -43,8 +47,12 @@ class TransferTests(unittest.TestCase):
         self.assertTrue((capture / "recording.media").is_file())
         # Simulate a lost receipt: retry must not create another processor job.
         atomic_json(capture / "delivery.json", {"status": "queued", "attempts": 1})
-        self.assertEqual(send_one(capture, self.endpoint, self.token)["status"], "delivered")
-        self.assertEqual(len(list((self.processor.state / "inbox").glob("*/job.json"))), 1)
+        self.assertEqual(
+            send_one(capture, self.endpoint, self.token)["status"], "delivered"
+        )
+        self.assertEqual(
+            len(list((self.processor.state / "inbox").glob("*/job.json"))), 1
+        )
         status = remote_status(capture.name, self.endpoint, self.token)
         self.assertEqual(status["status"], "queued")
 
@@ -61,9 +69,17 @@ class TransferTests(unittest.TestCase):
         capture = self.capture()
         manifest = json.loads((capture / "manifest.json").read_text())
         client = http.client.HTTPConnection("127.0.0.1", self.server.server_port)
-        client.request("POST", "/v1/recordings", body=b"x" * manifest["input_bytes"], headers={
-            "Authorization": "Bearer " + self.token.read_text(),
-            "X-SecureNote-Manifest": base64.b64encode(json.dumps(manifest).encode()).decode()})
+        client.request(
+            "POST",
+            "/v1/recordings",
+            body=b"x" * manifest["input_bytes"],
+            headers={
+                "Authorization": "Bearer " + self.token.read_text(),
+                "X-SecureNote-Manifest": base64.b64encode(
+                    json.dumps(manifest).encode()
+                ).decode(),
+            },
+        )
         response = client.getresponse()
         self.assertEqual(response.status, 400)
         response.read()
@@ -74,7 +90,9 @@ class TransferTests(unittest.TestCase):
     def test_local_mutation_keeps_queue(self):
         capture = self.capture()
         (capture / "recording.media").write_bytes(b"changed")
-        self.assertEqual(send_one(capture, self.endpoint, self.token)["status"], "queued")
+        self.assertEqual(
+            send_one(capture, self.endpoint, self.token)["status"], "queued"
+        )
         self.assertFalse(list((self.processor.state / "inbox").glob("*/job.json")))
 
     def test_unavailable_receiver_keeps_queue(self):
@@ -87,18 +105,26 @@ class TransferTests(unittest.TestCase):
 
     def test_queue_and_token_survive_receiver_restart(self):
         capture = self.capture()
-        self.assertEqual(send_one(capture, self.endpoint, self.token)["status"], "delivered")
+        self.assertEqual(
+            send_one(capture, self.endpoint, self.token)["status"], "delivered"
+        )
         original_token = self.token.read_text()
         self.server.shutdown()
         self.server.server_close()
         self.thread.join()
         self.processor = Processor(self.processor.state, self.root / "unused-model")
         self.server = Receiver(("127.0.0.1", 0), self.processor)
-        self.thread = threading.Thread(target=self.server.serve_forever, kwargs={"poll_interval": .02}, daemon=True)
+        self.thread = threading.Thread(
+            target=self.server.serve_forever,
+            kwargs={"poll_interval": 0.02},
+            daemon=True,
+        )
         self.thread.start()
         self.endpoint = f"http://127.0.0.1:{self.server.server_port}"
         self.assertEqual(self.token.read_text(), original_token)
-        self.assertEqual(remote_status(capture.name, self.endpoint, self.token)["status"], "queued")
+        self.assertEqual(
+            remote_status(capture.name, self.endpoint, self.token)["status"], "queued"
+        )
 
     def test_rejects_remote_plaintext_and_path_traversal(self):
         with self.assertRaises(ValueError):

@@ -1,0 +1,4 @@
+[00:00:00.00 - 00:00:06.52] Today's lecture covers reinforcement learning. A policy map sustained to an action. A value
+[00:00:06.52 - 00:00:13.04] function estimates expected future reward. Remember, the discount factor controls how
+[00:00:13.04 - 00:00:19.48] much future rewards matter. The homework is due on Friday. How does exploration affect
+[00:00:19.48 - 00:00:24.40] Thirding, the MMM will cover value iteration and policy iteration

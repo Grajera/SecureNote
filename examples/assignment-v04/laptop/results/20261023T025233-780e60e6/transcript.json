@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 6.52,
+      "text": "Today's lecture covers reinforcement learning. A policy map sustained to an action. A value"
+    },
+    {
+      "start": 6.52,
+      "end": 13.04,
+      "text": "function estimates expected future reward. Remember, the discount factor controls how"
+    },
+    {
+      "start": 13.04,
+      "end": 19.48,
+      "text": "much future rewards matter. The homework is due on Friday. How does exploration affect"
+    },
+    {
+      "start": 19.48,
+      "end": 24.4,
+      "text": "Thirding, the MMM will cover value iteration and policy iteration"
+    }
+  ],
+  "passages": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 6.52,
+      "text": "Today's lecture covers reinforcement learning."
+    },
+    {
+      "id": 1,
+      "start": 0.0,
+      "end": 6.52,
+      "text": "A policy map sustained to an action."
+    },
+    {
+      "id": 2,
+      "start": 0.0,
+      "end": 13.04,
+      "text": "A value function estimates expected future reward."
+    },
+    {
+      "id": 3,
+      "start": 6.52,
+      "end": 19.48,
+      "text": "Remember, the discount factor controls how much future rewards matter."
+    },
+    {
+      "id": 4,
+      "start": 13.04,
+      "end": 19.48,
+      "text": "The homework is due on Friday."
+    },
+    {
+      "id": 5,
+      "start": 13.04,
+      "end": 24.4,
+      "text": "How does exploration affect Thirding, the MMM will cover value iteration and policy iteration"
+    }
+  ]
+}

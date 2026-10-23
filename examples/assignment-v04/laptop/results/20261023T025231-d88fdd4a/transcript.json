@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.74,
+      "text": "Today we reviewed the project schedule."
+    },
+    {
+      "start": 2.74,
+      "end": 7.04,
+      "text": "We decided to use the local server for all meeting recordings."
+    },
+    {
+      "start": 7.04,
+      "end": 10.38,
+      "text": "Alice will send the revised budget by Friday."
+    },
+    {
+      "start": 10.38,
+      "end": 14.2,
+      "text": "The main risk is limited storage on the recording device."
+    },
+    {
+      "start": 14.2,
+      "end": 16.88,
+      "text": "Do we need a second backup drive?"
+    },
+    {
+      "start": 16.88,
+      "end": 18.88,
+      "text": "The next meeting is on Monday."
+    }
+  ],
+  "passages": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 2.74,
+      "text": "Today we reviewed the project schedule."
+    },
+    {
+      "id": 1,
+      "start": 2.74,
+      "end": 7.04,
+      "text": "We decided to use the local server for all meeting recordings."
+    },
+    {
+      "id": 2,
+      "start": 7.04,
+      "end": 10.38,
+      "text": "Alice will send the revised budget by Friday."
+    },
+    {
+      "id": 3,
+      "start": 10.38,
+      "end": 14.2,
+      "text": "The main risk is limited storage on the recording device."
+    },
+    {
+      "id": 4,
+      "start": 14.2,
+      "end": 16.88,
+      "text": "Do we need a second backup drive?"
+    },
+    {
+      "id": 5,
+      "start": 16.88,
+      "end": 18.88,
+      "text": "The next meeting is on Monday."
+    }
+  ]
+}

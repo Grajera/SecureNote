@@ -1,9 +1,5 @@
 @echo off
 cd /d "%~dp0"
-if not exist ".venv\Scripts\python.exe" (
-  echo Run the setup commands in README.md first.
-  pause
-  exit /b 1
-)
-".venv\Scripts\python.exe" desktop.py
-if errorlevel 1 pause
+where py >nul 2>nul
+if errorlevel 1 (python start.py) else (py -3 start.py)
+pause

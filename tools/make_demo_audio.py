@@ -18,14 +18,24 @@ SCRIPTS = {
 
 def main():
     import espeakng_loader
+
     library = ctypes.CDLL(espeakng_loader.get_library_path())
-    library.espeak_Initialize.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
+    library.espeak_Initialize.argtypes = [
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+    ]
     library.espeak_Initialize.restype = ctypes.c_int
     # Parent folder is required; eSpeak appends espeak-ng-data internally.
-    sample_rate = library.espeak_Initialize(2, 0, str(Path(espeakng_loader.get_data_path()).parent).encode(), 0)
+    sample_rate = library.espeak_Initialize(
+        2, 0, str(Path(espeakng_loader.get_data_path()).parent).encode(), 0
+    )
     if sample_rate <= 0:
         raise RuntimeError("eSpeak initialization failed")
-    callback_type = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(ctypes.c_short), ctypes.c_int, ctypes.c_void_p)
+    callback_type = ctypes.CFUNCTYPE(
+        ctypes.c_int, ctypes.POINTER(ctypes.c_short), ctypes.c_int, ctypes.c_void_p
+    )
     frames = []
 
     @callback_type
@@ -39,9 +49,16 @@ def main():
     library.espeak_SetVoiceByName.argtypes = [ctypes.c_char_p]
     library.espeak_SetVoiceByName(b"en-us")
     library.espeak_SetParameter(1, 145, 0)  # speaking rate
-    library.espeak_Synth.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_uint,
-                                    ctypes.c_int, ctypes.c_uint, ctypes.c_uint,
-                                    ctypes.POINTER(ctypes.c_uint), ctypes.c_void_p]
+    library.espeak_Synth.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.c_uint,
+        ctypes.c_int,
+        ctypes.c_uint,
+        ctypes.c_uint,
+        ctypes.POINTER(ctypes.c_uint),
+        ctypes.c_void_p,
+    ]
     destination = Path(__file__).resolve().parents[1] / "examples" / "media"
     destination.mkdir(parents=True, exist_ok=True)
     for name, text in SCRIPTS.items():
@@ -58,12 +75,41 @@ def main():
             audio.setframerate(sample_rate)
             audio.writeframes(b"".join(frames))
         (destination / (name + "_source.txt")).write_text(text, encoding="utf-8")
-    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(destination / "lecture.wav"),
-                    str(destination / "lecture.mp3")], check=True)
-    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i",
-                    "color=c=navy:s=320x240:r=5", "-i", str(destination / "planning.wav"),
-                    "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac",
-                    str(destination / "planning.mp4")], check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            str(destination / "lecture.wav"),
+            str(destination / "lecture.mp3"),
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=navy:s=320x240:r=5",
+            "-i",
+            str(destination / "planning.wav"),
+            "-shortest",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            str(destination / "planning.mp4"),
+        ],
+        check=True,
+    )
     print("Synthetic WAV, MP3 and MP4 demo recordings generated.")
 
 
