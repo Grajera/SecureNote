@@ -98,7 +98,7 @@ def automatic_notes(passages, maximum_per_section=8):
     These are candidate notes for review, not a claim of semantic understanding.
     No inferred speaker identities, deadlines, or unstated decisions are added.
     """
-    sections = {"Decisions": [], "Action items": [], "Questions": [], "Key points": []}
+    sections = {"Decisions": [], "Action items": [], "Key points": [], "Follow-ups": []}
     vectors, _ = term_vectors(passages)
     centroid = Counter()
     for vector in vectors:
@@ -108,12 +108,18 @@ def automatic_notes(passages, maximum_per_section=8):
         text = passage["text"]
         lowered = text.lower()
         category = "Key points"
-        if re.search(r"\b(decided|agreed|approved|decision is|will use|go with)\b", lowered) and not re.search(r"\b(not|haven't|haven’t|never|no decision)\b", lowered):
+        # A question mark alone is not evidence of an important unresolved issue.
+        # Keep every question in the transcript; don't promote rhetorical questions.
+        is_question = "?" in text or re.match(r"^(why|how|what|when|where|who|can we|should we|do we|did we|is it|are we)\b", lowered)
+        explicit_followup = re.search(r"\b(unresolved|open issue|need to confirm|pending approval|to be determined|not yet decided|have not decided)\b", lowered)
+        if is_question and not explicit_followup:
+            continue
+        if explicit_followup:
+            category = "Follow-ups"
+        elif re.search(r"\b(decided|agreed|approved|decision is|will use|go with)\b", lowered) and not re.search(r"\b(not decided|haven't decided|haven’t decided|never agreed|not agreed|not approved|no decision)\b", lowered):
             category = "Decisions"
-        elif re.search(r"\b(action item|need to|must|will send|will review|will prepare|i'll|i will|please)\b", lowered):
+        elif re.search(r"\b(action item|i'll|i will|we will|will send|will review|will prepare|will test|will submit|will deliver|will update|will check|will investigate|will schedule|please send|please review)\b", lowered):
             category = "Action items"
-        elif "?" in text or re.match(r"^(why|how|what|when|where|who|can we|should we|do we)\b", lowered):
-            category = "Questions"
         centrality = sum(weight * centroid[word] for word, weight in vector.items())
         emphasis = 3 if re.search(r"\b(important|remember|exam|deadline|risk|definition|due|key point)\b", lowered) else 0
         # Very short remarks are low-value unless an explicit category matched.
@@ -122,7 +128,8 @@ def automatic_notes(passages, maximum_per_section=8):
         ranked.append((category, centrality + emphasis, passage))
     seen = set()
     for category, score, passage in sorted(ranked, key=lambda item: -item[1]):
-        normalized = " ".join(tokens(passage["text"]))
+        # Negation must survive deduplication: opposite decisions are distinct.
+        normalized = " ".join(re.findall(r"[a-z0-9]+", passage["text"].lower()))
         if normalized in seen or len(sections[category]) >= maximum_per_section:
             continue
         seen.add(normalized)

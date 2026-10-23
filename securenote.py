@@ -43,6 +43,12 @@ def main():
             except importlib.metadata.PackageNotFoundError:
                 print(f"{package}: MISSING - install requirements.txt")
         print("Default model: models/base.en -", "present" if Path("models/base.en/model.bin").is_file() else "MISSING")
+        try:
+            from faster_whisper import WhisperModel
+            print("Whisper runtime import: OK")
+        except (ImportError, OSError) as error:
+            print("Whisper runtime import FAILED:", str(error))
+            return 2
         return 0
     if args.command == "download-model":
         # This is the only application command permitted to access the internet.

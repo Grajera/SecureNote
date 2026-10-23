@@ -1,0 +1,35 @@
+{
+  "release": "0.3.0",
+  "automated_tests": {
+    "passed": 24,
+    "failed": 0,
+    "command": "python -m unittest discover -s tests -v"
+  },
+  "browser_verification": {
+    "browser": "Chromium 153",
+    "platform": "Linux x86_64",
+    "result": "passed",
+    "console_errors": 0,
+    "checks": [
+      "complete transcript visible",
+      "timestamp seeking and playback",
+      "playback speed",
+      "search and context without hiding transcript",
+      "edit and reset controls",
+      "hide and restore",
+      "bookmarks",
+      "review flag",
+      "Markdown export",
+      "annotation persistence after reload",
+      "responsive 390px layout",
+      "actual MP4 import, recorder HTTP transfer, local ASR and notes",
+      "microphone capture using a synthetic browser device"
+    ]
+  },
+  "hardware_limitations": [
+    "Actual Windows microphone hardware not tested here",
+    "Actual Pi hardware not tested",
+    "Video picture/slides are not displayed; audio is previewed"
+  ],
+  "source_integrity": "Review annotations are separate; original ASR transcript artifacts remain unchanged"
+}

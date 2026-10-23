@@ -1,8 +1,9 @@
 faster-whisper==1.2.1
+# CTranslate2 4.6 imports pkg_resources on Windows.
+setuptools==80.9.0; sys_platform == "win32"
 ctranslate2==4.6.0
 huggingface-hub==0.36.0
 onnxruntime==1.23.2
 tokenizers==0.22.1
 av==16.0.1
 numpy==2.2.6
-setuptools==80.9.0

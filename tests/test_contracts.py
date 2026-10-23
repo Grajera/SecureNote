@@ -88,6 +88,20 @@ class ContractTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
             self.assertIn("incomplete", result["error"])
 
+    def test_missing_runtime_module_is_reported_by_name(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            model_directory = root / "model"
+            model_directory.mkdir()
+            for filename in ("model.bin", "config.json", "tokenizer.json"):
+                (model_directory / filename).write_text("placeholder")
+            with patch("prototype.pipeline.inspect_media", return_value={"duration_seconds": 1.}), \
+                    patch("prototype.pipeline.decode_audio", return_value={"duration_seconds": 1.}), \
+                    patch("prototype.pipeline.transcribe", side_effect=ModuleNotFoundError(name="pkg_resources")):
+                _, summary = run_recording(root / "recording", model_directory, root / "runs")
+            self.assertEqual(summary["missing_module"], "pkg_resources")
+            self.assertIn("pkg_resources", summary["error"])
+
 
 if __name__ == "__main__":
     unittest.main()

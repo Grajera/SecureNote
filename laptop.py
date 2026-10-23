@@ -44,8 +44,27 @@ class Processor:
         self.stop = threading.Event()
         self.wakeup = threading.Event()
         self.thread = None
+        self.state_lock = None
 
     def start(self):
+        # Only one processing worker may own this state directory, whether it
+        # was launched through laptop.py or the local review workspace.
+        handle = (self.state / ".processor.lock").open("a+b")
+        if handle.tell() == 0:
+            handle.write(b"0")
+            handle.flush()
+        handle.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as error:
+            handle.close()
+            raise RuntimeError("This receiver state is already in use. Stop the other receiver/review window before starting it again.") from error
+        self.state_lock = handle
         # A previous process may have stopped during ASR. Reprocess the persisted
         # recording on restart; abandoned result folders are left for inspection.
         with self.lock:
@@ -104,6 +123,9 @@ class Processor:
             # Graceful shutdown waits for the one active model call. No artificial
             # timeout claim: process isolation is a documented next step.
             self.thread.join()
+        if self.state_lock:
+            self.state_lock.close()
+            self.state_lock = None
 
 
 class Receiver(ThreadingHTTPServer):

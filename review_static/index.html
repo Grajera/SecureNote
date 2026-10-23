@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SecureNote · Recording workspace</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<aside class="sidebar">
+  <div class="brand"><span class="brand-mark">S</span><div>SecureNote<small>YOUR LOCAL WORKSPACE</small></div></div>
+  <button id="importButton" class="primary wide">+ Import recording</button>
+  <input id="fileInput" type="file" hidden accept="audio/*,video/*,.mkv,.m4a,.flac,.wav,.mp3,.mp4,.mov,.ogg,.avi,.webm">
+  <button id="recordButton" class="quiet wide">● Record microphone</button>
+  <div id="captureControls" class="capture" hidden><span id="captureTime">Recording…</span><button id="stopRecording">Stop &amp; process</button><button id="cancelRecording">Cancel</button></div>
+  <label class="library-search">Find a recording<input id="librarySearch" placeholder="Search titles…" type="search"></label>
+  <div class="section-label">RECORDINGS <span id="libraryCount">0</span></div>
+  <nav id="library" aria-label="Recordings"></nav>
+  <div class="sidebar-bottom"><span class="local-dot"></span> Local processing<small>Audio and notes stay on this computer.</small><button id="sampleButton" class="text-button">Try a sample meeting →</button></div>
+</aside>
+<main>
+  <header class="topbar"><div>Workspace <span>/</span> <strong>Recordings</strong></div><span class="privacy-badge">● Local AI · no cloud inference</span></header>
+  <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+  <div id="uploadStatus" class="upload" hidden><label id="uploadLabel" for="uploadProgress">Importing recording</label><progress id="uploadProgress" max="100" value="0"></progress></div>
+  <section id="emptyState" class="empty-state"><div class="empty-icon">♫</div><div class="eyebrow">LISTEN. FIND. REMEMBER.</div><h1>Your recordings,<br>with the context intact.</h1><p>Bring the recording, transcript and useful notes together.<br>Jump straight from a note to the moment it came from.</p><button id="emptyImport" class="primary">Import your first recording</button><button id="emptySample" class="quiet">Explore a sample meeting</button><p class="fine-print">Audio or video · local transcription · nothing sent to a model API</p></section>
+  <section id="workspace" hidden>
+    <div class="recording-header"><div class="recording-heading"><div class="eyebrow">RECORDING REVIEW</div><input id="recordingTitle" class="title-input" aria-label="Recording title" maxlength="200"><div id="recordingMeta" class="recording-meta"></div></div><div class="header-actions"><button id="reviewButton" class="quiet" aria-pressed="false">Mark reviewed</button><button id="exportNotes" class="quiet">Export notes ↓</button></div></div>
+    <div id="jobStatus" class="job-status" hidden><strong id="jobStatusTitle"></strong><p id="jobStatusText"></p><button id="retryButton" class="quiet" hidden>Retry processing</button></div>
+    <section class="player" aria-label="Recording player">
+      <audio id="audio" preload="metadata"></audio>
+      <div class="player-top"><div><span class="wave-icon">▥</span><strong>The original discussion</strong><span id="playbackStatus" class="muted">Preparing audio…</span></div><label class="speed-label">Speed <select id="speed" aria-label="Playback speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label></div>
+      <div class="transport"><button id="backButton" class="round quiet" aria-label="Back 10 seconds">−10</button><button id="playButton" class="play" aria-label="Play recording">▶</button><button id="forwardButton" class="round quiet" aria-label="Forward 10 seconds">+10</button><span id="currentTime" class="time">00:00</span><input id="seek" type="range" min="0" max="1" step="0.05" value="0" aria-label="Seek recording"><span id="totalTime" class="time">00:00</span><button id="bookmarkButton" class="quiet bookmark-action">☆ Bookmark</button></div>
+      <div class="player-bottom"><span>Click any timestamp to listen in context.</span><span><kbd>Space</kbd> play / pause <kbd>← →</kbd> skip 5s <kbd>/</kbd> search</span></div>
+    </section>
+    <div class="review-columns">
+      <section class="notes-panel panel"><div class="panel-header"><div><div class="eyebrow">WHAT MATTERS</div><h2>Notes <span id="noteCount" class="count">0</span></h2></div><button id="addNote" class="text-button">+ Your note</button></div><div class="notes-description">Decisions, commitments and useful takeaways. Questions stay in the transcript unless explicitly flagged for follow-up.</div><div class="notes-controls"><label><input id="showHidden" type="checkbox"> Show hidden notes</label><span id="saveStatus">Saved locally</span></div><div id="notes"></div><div class="bookmark-heading"><h3>Your bookmarks</h3><span>Personal notes, linked to the recording</span></div><div id="bookmarks"></div><p class="evidence-hint">Automatic notes are selected from the transcript. Review them against the recording; edited text is labeled.</p></section>
+      <section class="transcript-panel panel"><div class="panel-header"><div><div class="eyebrow">THE FULL PICTURE</div><h2>Full transcript <span id="segmentCount" class="count">0</span></h2></div><button id="exportTranscript" class="text-button">Download ↓</button></div><form id="searchForm" class="transcript-search"><input id="transcriptSearch" type="search" maxlength="512" placeholder="Find a word, topic or phrase…" aria-label="Search transcript"><button class="primary" type="submit">Find</button></form><div class="transcript-controls"><label><input id="followPlayback" type="checkbox" checked> Follow playback</label><span id="searchCount">Complete transcript</span><button id="clearSearch" class="text-button" hidden>Clear search</button></div><div id="searchResults" hidden></div><div id="transcript" class="transcript" tabindex="0" aria-label="Full timestamped transcript"></div></section>
+    </div>
+  </section>
+</main>
+<dialog id="editor"><form id="editForm"><div class="eyebrow" id="editorEyebrow">YOUR REVIEW</div><h2 id="editorTitle">Edit note</h2><label for="editText" id="editLabel">Note text</label><textarea id="editText" rows="5" maxlength="5000" required></textarea><p id="editSource" class="source-text"></p><div class="dialog-actions"><button id="cancelEdit" type="button" class="quiet">Cancel</button><button type="submit" class="primary">Save note</button></div></form></dialog>
+</body></html>

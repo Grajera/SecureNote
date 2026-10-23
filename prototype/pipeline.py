@@ -87,10 +87,15 @@ def inspect_media(path):
     try:
         duration = float(metadata["format"].get("duration", audio_streams[0].get("duration", "nan")))
     except (ValueError, KeyError, TypeError) as error:
-        raise ValueError("Recording duration is unavailable.") from error
-    if not math.isfinite(duration) or not 0 < duration <= MAX_SECONDS:
+        duration = float("nan")
+    # Browser MediaRecorder WebM files may have no container duration. They
+    # still pass through bounded decoding below; ASR never receives unchecked
+    # audio. Do not reject a valid local microphone recording for missing tags.
+    duration_known = math.isfinite(duration)
+    if duration_known and not 0 < duration <= MAX_SECONDS:
         raise ValueError("Recording must have a known duration of at most 2 hours.")
-    return {"input_bytes": size, "duration_seconds": duration,
+    return {"input_bytes": size, "duration_seconds": duration if duration_known else None,
+            "source_duration_known": duration_known,
             "container": metadata["format"]["format_name"]}
 
 
@@ -204,6 +209,7 @@ def run_recording(input_path, model_path, output_root="runs", queries=None, lang
             with log.stage("preprocessing"):
                 decoded = call_tool("decode_audio", log, path=original, destination=audio_path)
                 summary["decoded_audio"] = decoded
+                summary["duration_seconds"] = decoded["duration_seconds"]
             with log.stage("model_inference"):
                 segments, recognition = transcribe(audio_path, model_path, language, device, compute_type, threads)
                 summary["recognition"] = recognition
@@ -217,7 +223,7 @@ def run_recording(input_path, model_path, output_root="runs", queries=None, lang
             summary["transcript_characters"] = sum(len(segment["text"]) for segment in segments)
         with log.stage("retrieval"):
             results = {query: call_tool("search_transcript", log, passages=passages, query=query)
-                       for query in queries or ["decision action deadline important definition risk question"]}
+                       for query in queries or ["decision action deadline important definition risk"]}
         with log.stage("output"):
             notes = render_notes(sections, results, bool(segments))
             save_json(directory / "transcript.json", {"schema_version": "1.0", "segments": segments,
@@ -237,10 +243,13 @@ def run_recording(input_path, model_path, output_root="runs", queries=None, lang
     except (Exception, KeyboardInterrupt) as error:
         summary["status"] = "cancelled" if isinstance(error, KeyboardInterrupt) else "failed"
         summary["error_type"] = type(error).__name__
+        if isinstance(error, ModuleNotFoundError):
+            summary["missing_module"] = error.name
         log.emit("run", "failed", error_type=type(error).__name__)
         # Console uses a safe generic message for third-party errors, since model
         # and subprocess exceptions can contain user paths or recording content.
-        summary["error"] = ("Processing was cancelled." if isinstance(error, KeyboardInterrupt) else
+        summary["error"] = ("Missing Python module: " + str(error.name) + ". Reinstall requirements.txt." if isinstance(error, ModuleNotFoundError) else
+                            "Processing was cancelled." if isinstance(error, KeyboardInterrupt) else
                             str(error) if type(error) is ValueError else
                             "Processing failed. Check dependencies, local model files, and available memory.")
     finally:

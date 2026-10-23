@@ -1,118 +1,134 @@
-# SecureNote - local prototype
+# SecureNote 0.3 - local recording review
 
-Two running roles: **recorder/Pi emulator -> authenticated transfer -> laptop
-processor -> transcript, notes and search**. Both run as separate processes on
-your laptop now. Later, move the recorder to a Pi and the processor to a server.
-No hosted inference API, subscription or paid model service.
+A workspace for recordings, useful notes and the **full transcript**, with
+clickable timestamps and built-in audio playback. The lightweight recorder and
+laptop/server processor remain separate roles. AI inference stays local.
 
-Whisper is the AI model. Notes use automatic extractive importance scoring and
-English language cues; they are not LLM-generated summaries. Review outputs
-against the recording. Speaker recognition is not implemented. Capture is
-emulated by importing a recording; transfer, acknowledgment, queueing and local
-processing are real. Search matches words, not semantic paraphrases.
+## Upgrade your Windows installation
 
-## Windows quick start
+Copy the files inside the ZIP's SecureNote folder into your existing project,
+such as D:\Repos\SecureNotes, replacing application files. **Keep your .venv,
+models, laptop-state, device-spool and demo folders.** Stop an old laptop.py
+receiver before opening this workspace against the same state directory.
 
-Use **64-bit Python 3.12** (or 3.11) and Windows 11. Extract into a local folder
-outside OneDrive/Dropbox, such as `C:\SecureNote`. Open PowerShell in the folder
-containing `securenote.py`.
+In PowerShell from the project folder:
 
-Install FFmpeg:
+~~~powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe securenote.py doctor
+.\.venv\Scripts\python.exe review.py
+~~~
 
-```powershell
-winget install --id Gyan.FFmpeg -e
-```
+The Windows requirements pin setuptools to 80.9.0, fixing the CTranslate2
+pkg_resources import failure. Reuse your downloaded model. After setup,
+double-click **Start-SecureNote.cmd**. Running desktop.py opens the same UI.
+Keep the terminal open; Ctrl+C stops the local workspace.
 
-Close and reopen PowerShell, return to this folder, and verify both
-`ffmpeg -version` and `ffprobe -version`. Then:
+## First installation
 
-```powershell
+Use 64-bit Python 3.12 or 3.11 and FFmpeg/ffprobe. Install FFmpeg with
+winget install --id Gyan.FFmpeg -e, then reopen PowerShell to refresh PATH.
+
+~~~powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe securenote.py download-model --model base.en
 .\.venv\Scripts\python.exe securenote.py doctor
-.\.venv\Scripts\python.exe tools/run_distributed_demo.py
-```
+.\.venv\Scripts\python.exe review.py
+~~~
 
-Use `py -3.11` if that is your installed version. The demo starts a receiver
-process and invokes the recorder process to send WAV, MP3 and MP4 recordings.
-It waits for real transcription/notes and runs a corrupt-transfer failure test.
-Look in `demo-two-role/laptop/results/` for notes/transcripts and
-`demo-two-role/EVIDENCE.md` for results. For a repeat, choose a fresh folder with
-`--output demo-second`. `Run-TwoRole-Demo.cmd` runs the same demo after setup.
-Setup downloads packages/weights; inference stays offline. Model weights are
-not bundled. The device-to-laptop connection is local, not a cloud API.
+Use py -3.11 if needed. Setup downloads packages/weights; normal inference uses
+local files. CPU mode needs no CUDA/GPU, API key, subscription or model server.
 
-## Keep the laptop receiver running
+## Review a recording
 
-In PowerShell window 1 (leave open), or double-click `Start-Receiver.cmd`:
+- **Import recording:** choose audio/video. It enters the emulated recorder's
+  persistent queue, transfers over authenticated loopback HTTP to the processor,
+  then is transcribed locally. Import progress and job state remain visible.
+- **Record microphone:** explicitly grant browser microphone access, then stop
+  and process, or cancel. Recording starts only after you click. Keep the tab
+  open: microphone chunks are held in memory until stopped and imported.
+- **Full transcript:** visible beside notes without a search or download.
+  Click a note, transcript timestamp or search result to seek the player,
+  scroll the complete transcript and highlight the matching segment.
+- **Playback:** play/pause, scrub, skip 10 seconds, speed from 0.75-2x, optional
+  follow-along highlighting and browser-local resume position. Keyboard:
+  Space play/pause; arrows skip 5 seconds; / focuses transcript search.
+- **Search:** matches include surrounding context. Search never removes the
+  complete transcript. Search is lexical, so try words used in the recording.
+- **Review:** rename recordings, edit/reset notes, hide/restore low-value notes,
+  add timestamped personal notes/bookmarks, and mark recordings reviewed.
+  Edits are labeled and never overwrite the original ASR transcript.
+- **Export:** reviewed Markdown notes include bookmarks and the full transcript.
+  A separate plain-text transcript download is also available.
 
-```powershell
-.\.venv\Scripts\python.exe laptop.py serve
-```
+Audio from video is played using a local MP3 preview. The video's picture/slides
+are **not displayed** in this release. Original media is retained unchanged.
+Preview encoding preserves the full audio sequence, including silence. Source
+timestamps remain approximate ASR segment times, not word-perfect alignments.
 
-In PowerShell window 2, emulate the recorder capturing and sending a file:
+## Questions and important notes
 
-```powershell
-.\.venv\Scripts\python.exe device.py enqueue "C:\Recordings\class.mp4"
-.\.venv\Scripts\python.exe device.py send --token-file laptop-state/device.token
-.\.venv\Scripts\python.exe device.py status RECORDING-ID --token-file laptop-state/device.token
-```
+Ordinary questions stay in the transcript but are no longer automatically
+promoted to a Questions section or recycled into Key points. Only explicit
+unresolved-issue cues produce Follow-ups. Decisions, commitments and useful
+takeaways are prioritized. This is an English extractive heuristic, not semantic
+rhetorical-question classification; add a bookmark when an omitted question
+matters. Existing receiver transcripts use the new selection without ASR.
 
-`enqueue` prints a folder ending in the recording ID; use that ID for `status`.
-Queued files survive an unavailable receiver; run `send` again to retry.
-Delivered means checksum-verified storage, not completed transcription. The
-receiver processes each accepted job and status becomes `completed` or `failed`.
-Notes live in `laptop-state/results/<result_directory>/notes.md`. The device
-retains its copy even after acknowledgment. You can also drag a file onto
-`Send-To-Recorder.cmd` while the receiver is running.
+## Existing recordings and device/server compatibility
 
-Search an output without retranscribing:
+Default state is laptop-state. Known demo*/laptop directories beneath the
+project are discovered automatically. Add another receiver state if needed:
 
-```powershell
-.\.venv\Scripts\python.exe securenote.py search "laptop-state/results/RESULT-DIRECTORY" "homework exam"
-.\.venv\Scripts\python.exe desktop.py
-```
+~~~powershell
+.\.venv\Scripts\python.exe review.py --include-state "demo-two-role-2/laptop"
+~~~
 
-In the optional desktop window, use **Open existing run** to review receiver
-outputs and search. Its direct-file processing button remains a diagnostic
-shortcut; the intended deployment uses `device.py` and `laptop.py`.
+The app owns a receiver/worker on loopback port 8787; change it with --port.
+Only one processor may own a state directory. The device protocol still works:
 
-Common formats include WAV, MP3, M4A, MP4, MOV, MKV, WebM, FLAC, OGG and AVI,
-subject to FFmpeg codecs. Limits: 2 GiB / 2 hours; first audio track only.
-Unsupported/corrupt/DRM media and video without audio may be rejected.
-CPU/int8 is the default; your 32 GB laptop does not need CUDA or its GPU.
+~~~powershell
+.\.venv\Scripts\python.exe device.py enqueue "D:\Recordings\class.mp4"
+.\.venv\Scripts\python.exe device.py send --endpoint http://127.0.0.1:8787 --token-file laptop-state/device.token
+~~~
 
-## Verification and assignment files
+For separate Pi/server placement, use laptop.py serve and HTTPS as documented
+in docs/TWO_ROLE_DEPLOYMENT.md. The recorder still needs only standard-library
+Python; AI dependencies remain on the processor. The review UI is loopback-only;
+remote user accounts and remote review access are future work.
 
-```powershell
+## Privacy and storage
+
+The browser is a local interface, not a cloud service. Do not share its private
+launch link. Review media/APIs need a session cookie; mutations require CSRF
+validation. Host/Origin checks, a restrictive CSP and no-store responses protect
+the local session. There are no external assets, CDNs or app telemetry.
+
+Recordings, previews, transcripts, annotations and exports are sensitive
+**plaintext**. Use an approved encrypted, access-controlled local volume outside
+cloud sync. Review metadata is in laptop-state/reviews and previews are in
+laptop-state/previews. Browser storage holds playback position and speed.
+Device copies, receiver media and generated results are retained. No secure
+erasure, retention automation, certification or multiuser authorization is
+claimed. Use synthetic/public data for the assignment.
+
+## Verification and limitations
+
+~~~powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe tools/run_distributed_demo.py --output demo-second
-```
+.\.venv\Scripts\python.exe tools/run_distributed_demo.py --output demo-v03
+~~~
 
-Fourteen tests cover contracts, real HTTP transfers, authentication, checksum
-rejection, retries, persistent queues and duplicate-upload handling. Included
-two-role execution evidence is in `examples/distributed-verified/`. Older
-single-pipeline offline/silence evidence remains in `examples/verified/`.
-Processing was verified on a Linux CPU host, not this laptop;
-the Windows desktop window was not interactively tested here.
+Tests cover contracts, transfer, local session/CSRF boundaries, exact media byte
+ranges, actual audio-preview generation, annotation persistence/conflicts,
+question selection and original-transcript preservation. Browser checks cover
+playback/seeking, notes, search, export, reload, mobile layout, real MP4 import
+and ASR. Microphone capture was tested with a synthetic browser device;
+actual Windows microphone and Pi hardware remain untested here.
 
-- `docs/Project_Assignment_2.pdf`: four-page submission with the diagram,
-  three runs, contracts, model assumptions, failure test and gap analysis.
-- `docs/USER_GUIDE.md`: fuller Windows/Linux instructions and troubleshooting.
-- `docs/architecture.md`: implemented stages and exact interfaces.
-- `docs/SECURITY_AND_GAPS.md`: security limitations and Pi/server roadmap.
-- `docs/TWO_ROLE_DEPLOYMENT.md`: Pi/server migration and transfer contract.
-
-## Confidentiality
-
-Inference requires local model files, disables model downloads and uses local-only
-media decoding protocols. A token protects the receiver. HTTP is permitted
-only on loopback for same-PC emulation; separate machines require HTTPS with
-certificate verification. Logs omit transcript/note bodies by default. Transcripts,
-notes and recordings remain **plaintext sensitive files**: choose an approved
-encrypted local volume and restrictive folder permissions. `--output` selects
-the destination. Use synthetic/public data for this demonstration. No built-in
-disk encryption, per-device authorization, certification or tested Pi hardware is claimed. Temporary
-WAVs are cleaned up on handled completion/error; originals and searchable
-outputs are retained. Detailed controls are in the user guide.
+Whisper base.en, extractive notes and lexical search remain the baseline.
+No diarization, reliable speaker names, semantic summaries, slide understanding
+or production service hardening is claimed. The Assignment 2 report and archived
+execution evidence describe the v0.2 milestone; see docs/RELEASE_NOTES_0_3.md
+for this newer product release.
