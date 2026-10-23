@@ -4,7 +4,7 @@ import json
 import math
 import re
 import threading
-import uuid
+import shutil
 from pathlib import Path
 
 from .analysis import automatic_notes, safe_markdown, sentence_passages, timestamp, validate_segments
@@ -81,7 +81,7 @@ class ReviewStore:
                         return title
         return "Recording · " + job.get("captured_at", "")[:16].replace("T", " ")
 
-    def catalog(self):
+    def catalog(self, trashed=False):
         recordings = {}
         for root in self.roots:
             for path in (root / "inbox").glob("*/job.json"):
@@ -89,6 +89,8 @@ class ReviewStore:
                     job = json.loads(path.read_text(encoding="utf-8"))
                     identifier = validate_identifier(job["recording_id"])
                     annotation = self.annotation(identifier)
+                    if bool(annotation.get("trashed", False)) != trashed:
+                        continue
                     recordings.setdefault(identifier, {"id": identifier, "title": annotation["title"] or self.suggested_title(root, job),
                         "status": job["status"], "reviewed": annotation["reviewed"],
                         "created_at": job.get("captured_at", ""), "input_bytes": job["input_bytes"],
@@ -162,6 +164,59 @@ class ReviewStore:
             atomic_json(self.state / "reviews" / (identifier + ".json"), updated)
             return updated
 
+    def trash(self, identifier, restore=False):
+        with self.lock:
+            _, job = self.locate(identifier)
+            if job["status"] in ("queued", "processing"):
+                raise RuntimeError("Wait for processing to finish before deleting this recording.")
+            annotation = self.annotation(identifier)
+            annotation.update(trashed=not restore, version=annotation["version"] + 1)
+            atomic_json(self.state / "reviews" / (identifier + ".json"), annotation)
+            return {"trashed": not restore}
+
+    def purge(self, identifier):
+        with self.lock:
+            root, job = self.locate(identifier)
+            if not self.annotation(identifier).get("trashed"):
+                raise ValueError("Move this recording to Trash first")
+            if job["status"] in ("queued", "processing") or self.preview_status(identifier) == "preparing":
+                raise RuntimeError("Wait for processing and audio preparation to finish")
+            # Only managed paths derived from validated identifiers; never the imported original.
+            name = job.get("result_directory", "")
+            if re.fullmatch(r"\d{8}T\d{6}-[a-f0-9]{8}", name):
+                others = [p for p in (root / "inbox").glob("*/job.json") if p.parent.name != identifier]
+                if not any(json.loads(p.read_text(encoding="utf-8")).get("result_directory") == name for p in others):
+                    if (root / "results" / name).exists():
+                        shutil.rmtree(root / "results" / name)
+            for folder in (root / "inbox" / identifier, self.state / "review-device" / identifier):
+                if folder.exists():
+                    shutil.rmtree(folder)
+            self.preview_path(identifier).unlink(missing_ok=True)
+            (self.state / "reviews" / (identifier + ".json")).unlink(missing_ok=True)
+            self.previews.pop(identifier, None)
+            return {"deleted": True}
+
+    def search(self, query):
+        if not isinstance(query, str) or len(query) > 512:
+            raise ValueError("Search must be at most 512 characters")
+        words = query.casefold().split()
+        if not words:
+            return []
+        matches = []
+        for recording in self.catalog():
+            try:
+                detail = self.detail(recording["id"])
+                sources = [("Your note", n) for n in detail["annotation"]["bookmarks"]]
+                sources += [(n["category"], n) for n in detail["notes"] if not n["hidden"]]
+                sources += [("Transcript", n) for n in detail["segments"]]
+                for kind, note in sources:
+                    if all(word in note["text"].casefold() for word in words):
+                        matches.append({"id": recording["id"], "title": recording["title"],
+                            "kind": kind, "text": note["text"], "start": note["start"]})
+            except (OSError, ValueError, KeyError):
+                continue
+        return sorted(matches, key=lambda n: n["kind"] == "Transcript")[:100]
+
     def preview_path(self, identifier):
         validate_identifier(identifier)
         return self.state / "previews" / (identifier + ".mp3")
@@ -172,8 +227,8 @@ class ReviewStore:
         return self.previews.get(identifier, "not_prepared")
 
     def prepare_preview(self, identifier):
-        root, job = self.locate(identifier)
         with self.lock:
+            root, job = self.locate(identifier)
             if self.preview_status(identifier) in ("ready", "preparing"):
                 return self.preview_status(identifier)
             self.previews[identifier] = "preparing"

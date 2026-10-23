@@ -1,6 +1,7 @@
 'use strict';
 const byId = (id) => document.getElementById(id);
 const audio = byId('audio');
+let trashMode = false;
 let csrf = '', recordings = [], current = null, activeRow = -1, previewFor = '', pendingSeek = null;
 let searchTerm = '', editAction = null, saving = false, selecting = 0, previewRequested = new Set();
 let recorder = null, microphone = null, captureChunks = [], cancelCapture = false, captureTimer = null;
@@ -138,7 +139,8 @@ async function saveReview(changes) {
 }
 function renderNotes() {
   const container = byId('notes'); container.replaceChildren();
-  const visible = current.notes.filter(note => !note.hidden || byId('showHidden').checked);
+  const filter = byId('noteFilter').value.toLowerCase();
+  const visible = current.notes.filter(note => (!note.hidden || byId('showHidden').checked) && filter.split(/\s+/).filter(Boolean).every(word => note.text.toLowerCase().includes(word)));
   byId('noteCount').textContent = current.notes.filter(note => !note.hidden).length;
   for (const category of ['Decisions', 'Action items', 'Key points', 'Follow-ups']) {
     const group = visible.filter(note => note.category === category);
@@ -180,7 +182,7 @@ function renderNotes() {
 }
 function renderBookmarks() {
   const container = byId('bookmarks'); container.replaceChildren();
-  const bookmarks = [...current.annotation.bookmarks].sort((a, b) => a.start - b.start);
+  const bookmarks = current.annotation.bookmarks.filter(note => byId('noteFilter').value.toLowerCase().split(/\s+/).filter(Boolean).every(word => note.text.toLowerCase().includes(word))).sort((a, b) => a.start - b.start);
   for (const bookmark of bookmarks) {
     const card = element('article', 'note-card'); card.append(element('p', '', bookmark.text));
     const footer = element('div', 'note-footer'); footer.append(stamp(bookmark.start));
@@ -225,7 +227,7 @@ function renderLibrary() {
     button.append(meta); button.onclick = () => run(() => selectRecording(recording.id)); container.append(button);
   }
 }
-async function refreshLibrary() { recordings = await api('/api/jobs'); renderLibrary(); }
+async function refreshLibrary() { recordings = await api('/api/jobs' + (trashMode ? '?trash=1' : '')); renderLibrary(); }
 function showJobStatus() {
   const failed = current.status === 'failed'; const busy = ['queued', 'processing'].includes(current.status);
   byId('jobStatus').hidden = !busy && !failed;
@@ -251,6 +253,9 @@ async function ensurePreview() {
   }
 }
 function renderDetail() {
+  byId('deleteRecording').hidden = trashMode;
+  byId('restoreRecording').hidden = !trashMode;
+  byId('purgeRecording').hidden = !trashMode;
   byId('emptyState').hidden = true; byId('workspace').hidden = false;
   if (document.activeElement !== byId('recordingTitle')) byId('recordingTitle').value = current.title;
   byId('recordingMeta').textContent = (current.created_at ? new Date(current.created_at).toLocaleString() + '  ·  ' : '') + clock(current.duration) + '  ·  ' + current.device;
@@ -267,6 +272,8 @@ async function selectRecording(identifier) {
   const detail = await api('/api/jobs/' + identifier);
   if (request !== selecting) return;
   current = detail;
+  byId('quickNote').value = sessionStorage.getItem('draft-' + identifier) || '';
+  byId('noteFilter').value = ''; 
   pendingSeek = {seconds: Number(localStorage.getItem('securenote-position-' + identifier)) || 0, play: false};
   byId('seek').value = pendingSeek.seconds;
   renderDetail(); renderLibrary(); await ensurePreview();
@@ -307,7 +314,7 @@ byId('backButton').onclick = () => seekTo((audio.currentTime || 0) - 10, false, 
 byId('forwardButton').onclick = () => seekTo((audio.currentTime || 0) + 10, false, true);
 byId('seek').oninput = event => seekTo(Number(event.target.value), false, true);
 byId('speed').onchange = () => { audio.playbackRate = Number(byId('speed').value); localStorage.setItem('securenote-speed', byId('speed').value); };
-byId('bookmarkButton').onclick = addBookmark; byId('addNote').onclick = addBookmark;
+byId('bookmarkButton').onclick = addBookmark; byId('addNote').onclick = () => byId('quickNote').focus();
 byId('recordingTitle').onchange = () => run(async () => {
   const title = byId('recordingTitle').value.trim() || 'Untitled recording';
   await saveReview({title}); current.title = title; await refreshLibrary();
@@ -384,6 +391,8 @@ async function start() {
     } else csrf = (await api('/api/session')).csrf;
     const savedSpeed = localStorage.getItem('securenote-speed');
     if (['0.75', '1', '1.25', '1.5', '2'].includes(savedSpeed)) byId('speed').value = savedSpeed;
+    const engine = await api('/api/engine');
+    document.querySelector('.privacy-badge').textContent = '● ' + engine.device.toUpperCase() + ' · ' + engine.compute_type + ' · Local AI';
     await refreshLibrary();
     if (recordings.length) await selectRecording(recordings[0].id);
     setInterval(() => run(async () => {
@@ -404,3 +413,55 @@ async function start() {
   } catch (error) { notify(error.message); }
 }
 start();
+
+byId('noteFilter').oninput = () => { if (current) renderNotes(); };
+byId('quickNote').oninput = () => { if (current) sessionStorage.setItem('draft-' + current.id, byId('quickNote').value); };
+byId('quickNote').onkeydown = event => { if (event.ctrlKey && event.key === 'Enter') { event.preventDefault(); byId('quickNoteForm').requestSubmit(); } };
+byId('quickNoteForm').onsubmit = event => {
+  event.preventDefault();
+  run(async () => {
+    if (!current) return;
+    const text = byId('quickNote').value.trim(); if (!text) return;
+    const id = current.id;
+    await saveReview({bookmarks: [...current.annotation.bookmarks, {id: crypto.randomUUID().replaceAll('-', ''), start: Math.min(audio.currentTime || 0, current.duration || 0), text}]});
+    sessionStorage.removeItem('draft-' + id); byId('quickNote').value = ''; renderBookmarks();
+  });
+};
+async function resetSelection() {
+  audio.pause(); current = null; audio.removeAttribute('src'); audio.load();
+  byId('workspace').hidden = true; byId('emptyState').hidden = false;
+  await refreshLibrary(); if (recordings.length) await selectRecording(recordings[0].id);
+}
+byId('trashView').onclick = () => run(async () => {
+  trashMode = !trashMode; byId('trashView').textContent = trashMode ? '← Back to recordings' : 'Open Trash';
+  await resetSelection();
+});
+byId('deleteRecording').onclick = () => run(async () => {
+  if (!current || !confirm('Move this recording and its notes to Trash? You can restore it later.')) return;
+  await api(jobPath('/trash'), 'POST'); await resetSelection(); notify('Moved to Trash. Open Trash to restore or permanently delete.');
+});
+byId('restoreRecording').onclick = () => run(async () => { await api(jobPath('/restore'), 'POST'); await resetSelection(); notify('Recording restored.'); });
+byId('purgeRecording').onclick = () => run(async () => {
+  if (!current || !confirm('Permanently delete the managed recording, transcript, results and personal notes? This cannot be undone. Original imported files, separate recorder spools and backups are not removed.')) return;
+  await api(jobPath('/purge'), 'POST'); await resetSelection(); notify('Managed recording files deleted.');
+});
+byId('closeGlobalSearch').onclick = () => { byId('globalResults').hidden = true; byId('globalQuery').value = ''; };
+byId('globalSearchForm').onsubmit = event => {
+  event.preventDefault(); run(async () => {
+    const query = byId('globalQuery').value.trim();
+    const results = await api('/api/search?q=' + encodeURIComponent(query));
+    const box = byId('globalResults'); box.hidden = false; box.replaceChildren(element('h3', '', results.length + ' results · notes first (up to 100)'));
+    for (const hit of results) {
+      const button = element('button', 'search-hit');
+      button.append(element('small', '', hit.title + ' · ' + hit.kind + ' · ' + clock(hit.start)));
+      const text = element('p'); text.append(markedText(hit.text, query)); button.append(text);
+      button.onclick = () => run(async () => {
+        trashMode = false; byId('trashView').textContent = 'Open Trash'; await refreshLibrary();
+        await selectRecording(hit.id); seekTo(hit.start, false, true);
+        if (hit.kind !== 'Transcript') { byId('noteFilter').value = query; renderNotes(); }
+        box.hidden = true;
+      }); box.append(button);
+    }
+    if (!results.length) box.append(element('p', '', 'No matching notes or transcript passages. Try a word from the recording. Trash is excluded.'));
+  });
+};

@@ -154,19 +154,31 @@ def create_run(root):
     return directory
 
 
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def load_model(model_path, device, compute_type, threads):
+    from .gpu import configure_dlls
+    configure_dlls()
+    from faster_whisper import WhisperModel
+    return WhisperModel(str(model_path), device=device, compute_type=compute_type,
+                        cpu_threads=threads, num_workers=1, local_files_only=True)
+
+
 def transcribe(audio_path, model_path, language, device, compute_type, threads):
     # Set offline mode before the model libraries are imported. An explicit
     # directory is required; run() never interprets the path as a Hub model ID.
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+    from .gpu import configure_dlls
+    configure_dlls()
     from faster_whisper import WhisperModel
     import numpy as np
     # Already-decoded PCM avoids doing a second media decode and makes the
     # model boundary explicit: a one-dimensional float32 waveform at 16 kHz.
     with wave.open(str(audio_path), "rb") as audio:
         samples = np.frombuffer(audio.readframes(audio.getnframes()), dtype="<i2").astype(np.float32) / 32768.0
-    model = WhisperModel(str(model_path), device=device, compute_type=compute_type,
-                         cpu_threads=threads, num_workers=1, local_files_only=True)
+    model = load_model(str(model_path), device, compute_type, threads)
     segments, info = model.transcribe(samples, language=language,
                                       beam_size=5, temperature=0, vad_filter=True,
                                       condition_on_previous_text=False)

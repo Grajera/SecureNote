@@ -129,8 +129,12 @@ class WorkspaceHandler(Handler):
         try:
             if parsed.path == "/api/session":
                 return self.reply(200, {"csrf": self.server.csrf})
+            if parsed.path == "/api/search":
+                return self.reply(200, self.server.store.search(parse_qs(parsed.query).get("q", [""])[0]))
+            if parsed.path == "/api/engine":
+                return self.reply(200, {"device": self.server.processor.device, "compute_type": self.server.processor.compute_type})
             if parsed.path == "/api/jobs":
-                return self.reply(200, self.server.store.catalog())
+                return self.reply(200, self.server.store.catalog(parse_qs(parsed.query).get("trash") == ["1"]))
             parts = parsed.path.strip("/").split("/")
             if len(parts) not in (3, 4) or parts[:2] != ["api", "jobs"]:
                 return self.reply(404, {"error": "Not found"})
@@ -227,6 +231,10 @@ class WorkspaceHandler(Handler):
             if len(parts) != 4 or parts[:2] != ["api", "jobs"]:
                 return self.reply(404, {"error": "Not found"})
             identifier = validate_identifier(parts[2])
+            if parts[3] in ("trash", "restore", "purge"):
+                with self.server.processor.lock:
+                    result = self.server.store.purge(identifier) if parts[3] == "purge" else self.server.store.trash(identifier, parts[3] == "restore")
+                return self.reply(200, result)
             if parts[3] == "review":
                 return self.reply(200, self.server.store.save_annotation(identifier, self.read_json()))
             if parts[3] == "prepare":
@@ -252,10 +260,14 @@ def main():
     parser.add_argument("--include-state", action="append", default=[])
     parser.add_argument("--port", type=int, default=8787)
     parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     args = parser.parse_args()
+    if args.device == "cuda":
+        from prototype.gpu import check_cuda
+        check_cuda(args.model_dir)
     # Discover only known demo directories beneath this project, not arbitrary disks.
     roots = args.include_state + [str(path) for path in Path.cwd().glob("demo*/laptop")]
-    processor = Processor(args.state, args.model_dir)
+    processor = Processor(args.state, args.model_dir, device=args.device)
     server = WorkspaceServer(("127.0.0.1", args.port), processor, roots)
     processor.start()
     launch_url = server.origin + "/#session=" + server.launch_key

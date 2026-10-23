@@ -165,6 +165,41 @@ class ReviewTests(unittest.TestCase):
         self.assertNotIn("<script>", text)
         self.assertIn("&lt;script&gt;", text)
 
+    def test_trash_restore_purge_and_search(self):
+        store = self.server.store
+        store.save_annotation(self.identifier, {"version": 0, "bookmarks": [
+            {"id": "b" * 32, "start": 4, "text": "My budget reminder"}]})
+        self.assertEqual(store.search("budget")[0]["kind"], "Your note")
+        store.trash(self.identifier)
+        self.assertEqual(store.catalog(), [])
+        self.assertEqual(store.search("budget"), [])
+        self.assertEqual(len(store.catalog(True)), 1)
+        store.trash(self.identifier, restore=True)
+        self.assertEqual(len(store.catalog()), 1)
+        self.assertEqual(len(store.detail(self.identifier)["annotation"]["bookmarks"]), 1)
+        store.trash(self.identifier)
+        store.purge(self.identifier)
+        self.assertFalse(self.result.exists())
+        self.assertFalse((self.state / "inbox" / self.identifier).exists())
+        self.assertEqual(store.catalog(True), [])
+
+    def test_delete_protects_active_jobs_and_requires_csrf(self):
+        self.login()
+        self.assertEqual(self.request("POST", "/api/jobs/" + self.identifier + "/trash")[0], 403)
+        path = self.state / "inbox" / self.identifier / "job.json"
+        job = json.loads(path.read_text()); job["status"] = "processing"; atomic_json(path, job)
+        with self.assertRaises(RuntimeError):
+            self.server.store.trash(self.identifier)
+
+    def test_cuda_probe_handles_native_crash_without_inprocess_inference(self):
+        from prototype.gpu import check_cuda
+        from subprocess import CompletedProcess
+        with patch("prototype.gpu.subprocess.run", return_value=CompletedProcess([], 1, "", "Missing cudnn_ops64_9.dll")):
+            with self.assertRaisesRegex(SystemExit, "requirements-cuda"):
+                check_cuda("unused-model")
+        gpu = Processor(Path(self.temporary.name) / "gpu", "unused", device="cuda")
+        self.assertEqual((gpu.device, gpu.compute_type), ("cuda", "float16"))
+
     def test_range_parser_edge_cases(self):
         self.assertEqual(parse_range("bytes=4-", 10), (4, 9, True))
         self.assertEqual(parse_range("bytes=-100", 10), (0, 9, True))

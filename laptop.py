@@ -35,9 +35,11 @@ def initialize(state):
 
 
 class Processor:
-    def __init__(self, state, model_directory, queries=None, log_content=False):
+    def __init__(self, state, model_directory, queries=None, log_content=False, device="cpu"):
         self.state = initialize(state)
         self.model_directory = Path(model_directory)
+        self.device = device
+        self.compute_type = "float16" if device == "cuda" else "int8"
         self.queries = queries
         self.log_content = log_content
         self.lock = threading.RLock()
@@ -103,7 +105,7 @@ class Processor:
                 if payload.stat().st_size != job["input_bytes"] or digest_file(payload) != job["sha256"]:
                     raise ValueError("Persisted recording failed integrity check")
                 result_directory, summary = run_recording(payload, self.model_directory,
-                    self.state / "results", self.queries, log_content=self.log_content)
+                    self.state / "results", self.queries, log_content=self.log_content, device=self.device, compute_type=self.compute_type)
                 job.update(status="completed" if summary["status"] in ("ok", "no_speech") else "failed",
                            pipeline_status=summary["status"], result_directory=result_directory.name,
                            latency_ms=summary["latency_ms"])
